@@ -1,3 +1,11 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
 ## [0.0.1] - First commit
 
-* TODO: UPnP IGD Implementation
+## [0.0.2] - SSDP Discovery
+
+### Added
+
+* SSDP M-Search request working
