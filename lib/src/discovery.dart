@@ -17,11 +17,10 @@ class DeviceDiscoverer {
     }
   }
 
-  Future<void> _createSocket(InternetAddress address, int port) async {
+  Future<void> _createSocket(InternetAddress address, [int port = 0]) async {
     final socket = await RawDatagramSocket.bind(address, port);
 
     socket.listen((event) {
-      print(event);
       if (event == RawSocketEvent.read) {
         final packet = socket.receive();
 
@@ -31,6 +30,8 @@ class DeviceDiscoverer {
         final parts = data.split('\r\n');
 
         print(parts);
+
+        // TODO: Decode data
       }
     });
 
@@ -38,18 +39,18 @@ class DeviceDiscoverer {
   }
 
   void search([String searchTarget = 'upnp:rootdevice']) {
-    final buff = StringBuffer();
+    final buff = StringBuffer()
+      ..writeln('M-SEARCH * HTTP/1.1')
+      ..writeln('HOST: 239.255.255.250:1900')
+      ..writeln('MAN: "ssdp:discover"')
+      ..writeln('MX: 3')
+      ..writeln('ST: $searchTarget\n');
 
-    buff.write('M-SEARCH * HTTP/1.1\r\n');
-    buff.write('HOST: 239.255.255.250:1900\r\n');
-    buff.write('MAN: "ssdp:discover"\r\n');
-    buff.write('MX: 3\r\n');
-    buff.write('ST: $searchTarget\r\n');
-    final data = utf8.encode(buff.toString());
+    final data = utf8.encode(buff.toString().replaceAll('\n', '\r\n'));
 
     for (var socket in _sockets) {
       // Repeated 3 times beacuse UDP messages might be lost
-      for (int i = 0; i < 3; i++) {
+      for (var i = 0; i < 3; i++) {
         socket.send(data, _getMulticastAddress(socket.address.type), 1900);
       }
     }
@@ -57,7 +58,7 @@ class DeviceDiscoverer {
 
   List<InternetAddress> _getAddresses(InternetAddressType addressType) {
     if (addressType == InternetAddressType.any) {
-      return [InternetAddress.anyIPv4, InternetAddress.loopbackIPv6];
+      return [InternetAddress.anyIPv4, InternetAddress.anyIPv6];
     }
     return [
       addressType == InternetAddressType.IPv4
