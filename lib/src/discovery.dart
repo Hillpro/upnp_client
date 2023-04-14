@@ -77,9 +77,10 @@ class DeviceDiscoverer {
     final data = utf8.encode(buff.toString().replaceAll('\n', '\r\n'));
 
     for (var socket in _sockets) {
+      var multicastAddress = _getMulticastAddress(socket.address.type);
       // Repeated 3 times beacuse UDP messages might be lost
       for (var i = 0; i < 3; i++) {
-        socket.send(data, _getMulticastAddress(socket.address.type), 1900);
+        socket.send(data, multicastAddress, 1900);
       }
     }
   }
