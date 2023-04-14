@@ -60,7 +60,6 @@ class DeviceDiscoverer {
 
     var device = Device.fromXml(xml, location);
 
-    print(_devices.contains(device));
     if (_devices.contains(device)) {
       _devices.add(device);
     }

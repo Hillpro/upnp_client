@@ -90,7 +90,6 @@ class DeviceDescription {
   String? get uuid => udn?.substring('uuid:'.length);
 
   DeviceDescription.fromXml(this._xml) {
-    // print(_xml.toString());
     deviceType = _xml.getElement('deviceType')?.text;
     friendlyName = _xml.getElement('friendlyName')?.text;
     manufacturer = _xml.getElement('manufacturer')?.text;
@@ -103,6 +102,8 @@ class DeviceDescription {
     serialNumber = _xml.getElement('serialNumber')?.text;
     udn = _xml.getElement('UDN')?.text;
     upc = _xml.getElement('UPC')?.text;
+
+    // TODO: Load icons
   }
 
   @override
