@@ -1,8 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:upnp_client/src/device.dart';
+import 'package:xml/xml.dart';
+
 class DeviceDiscoverer {
   final _sockets = <RawDatagramSocket>[];
+  final _devices = <Device>[];
 
   // TODO: Change how to receive addressType(s) choice
   Future<void> start(
@@ -19,6 +23,7 @@ class DeviceDiscoverer {
 
   Future<void> _createSocket(InternetAddress address, [int port = 0]) async {
     final socket = await RawDatagramSocket.bind(address, port);
+    _sockets.add(socket);
 
     socket.listen((event) {
       if (event == RawSocketEvent.read) {
@@ -29,13 +34,36 @@ class DeviceDiscoverer {
         final data = utf8.decode(packet.data);
         final parts = data.split('\r\n');
 
-        print(parts);
+        if (parts
+                .indexWhere((element) => element.contains('HTTP/1.1 200 OK')) ==
+            -1) return;
 
-        // TODO: Decode data
+        _addDevice(parts);
       }
     });
+  }
 
-    _sockets.add(socket);
+  void _addDevice(List<String> message) async {
+    var location = message.firstWhere(
+        (element) => element.toUpperCase().contains('LOCATION'),
+        orElse: () => '');
+
+    if (location == '') return;
+
+    location = location.substring(location.indexOf('http'));
+
+    var request = await HttpClient().getUrl(Uri.parse(location));
+    var response = await request.close();
+
+    final xml = XmlDocument.parse(await response.transform(utf8.decoder).join())
+        .rootElement;
+
+    var device = Device.fromXml(xml, location);
+
+    print(_devices.contains(device));
+    if (_devices.contains(device)) {
+      _devices.add(device);
+    }
   }
 
   void search([String searchTarget = 'upnp:rootdevice']) {
