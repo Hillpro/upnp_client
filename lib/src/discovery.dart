@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -6,7 +7,7 @@ import 'package:xml/xml.dart';
 
 class DeviceDiscoverer {
   final _sockets = <RawDatagramSocket>[];
-  final _devices = <Device>[];
+  final _devices = StreamController<Device>.broadcast();
 
   // TODO: Change how to receive addressType(s) choice
   Future<void> start(
@@ -60,12 +61,10 @@ class DeviceDiscoverer {
 
     var device = Device.fromXml(xml, location);
 
-    if (_devices.contains(device)) {
-      _devices.add(device);
-    }
+    _devices.add(device);
   }
 
-  void search([String searchTarget = 'upnp:rootdevice']) {
+  void _search([String searchTarget = 'upnp:rootdevice']) {
     final buff = StringBuffer()
       ..writeln('M-SEARCH * HTTP/1.1')
       ..writeln('HOST: 239.255.255.250:1900')
@@ -82,6 +81,20 @@ class DeviceDiscoverer {
         socket.send(data, multicastAddress, 1900);
       }
     }
+  }
+
+  Future<List<Device>> getDevices({Duration timeout = const Duration(seconds: 5)}) async {
+    final list = <Device>[];
+
+    final sub = _devices.stream.listen((device) => {
+      if (!list.contains(device)) list.add(device)
+    });
+
+    _search();
+    await Future.delayed(timeout);
+    await sub.cancel();
+
+    return list;
   }
 
   List<InternetAddress> _getAddresses(InternetAddressType addressType) {

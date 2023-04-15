@@ -28,7 +28,7 @@ class Device {
 
   @override
   String toString() {
-    return 'Url: $url, UrlBase: $urlBase\n${deviceDescription.toString()}';
+    return 'Url: $url\n${deviceDescription.toString()}';
   }
 
   @override
