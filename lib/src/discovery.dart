@@ -9,9 +9,18 @@ class DeviceDiscoverer {
   final _sockets = <RawDatagramSocket>[];
   final _devices = StreamController<Device>.broadcast();
 
-  // TODO: Change how to receive addressType(s) choice
+  ///
+  /// Starts the Discoverer.
+  ///
+  /// Starts a socket to listen to UPnP devices responses for a given [InternetAddressType] and [port]
+  /// If the address type is [InternetAddressType.any], a socket will be created for every supported types.
+  /// Currently, IP version 4 (IPv4), IP version 6 (IPv6) are supported.
+  ///
+  /// Throws an [ArgumentError] if the [InternetAddressType] is not supported.
+  ///
   Future<void> start(
       {int port = 0,
+      // TODO: Change how to receive addressType(s) choice
       InternetAddressType addressType = InternetAddressType.any}) async {
     if (addressType == InternetAddressType.unix) {
       throw ArgumentError("Internet Address Type not valid");
@@ -83,12 +92,15 @@ class DeviceDiscoverer {
     }
   }
 
-  Future<List<Device>> getDevices({Duration timeout = const Duration(seconds: 5)}) async {
+  ///
+  /// Search for UPnP devices for a given [timeout] time, then returns the list
+  ///
+  Future<List<Device>> getDevices(
+      {Duration timeout = const Duration(seconds: 5)}) async {
     final list = <Device>[];
 
-    final sub = _devices.stream.listen((device) => {
-      if (!list.contains(device)) list.add(device)
-    });
+    final sub = _devices.stream
+        .listen((device) => {if (!list.contains(device)) list.add(device)});
 
     _search();
     await Future.delayed(timeout);
