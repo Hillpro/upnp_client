@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.4] - Dart SDK support
+
+### Changed
+
+* Now support dart sdk for >=2.12.0 <3.0.0
+
 ## [0.0.3] - Devices
 
 ### Added
