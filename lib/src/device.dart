@@ -2,9 +2,6 @@ import 'package:upnp_client/src/service.dart';
 import 'package:xml/xml.dart';
 
 class Device {
-  /// The device description information
-  DeviceDescription? deviceDescription;
-
   /// The xml element the properties of this object were initialized from
   XmlElement xml;
 
@@ -14,21 +11,39 @@ class Device {
   /// The base url of this device
   String? urlBase;
 
+  /// The device description information
+  DeviceDescription? deviceDescription;
+
   /// The list of provided services
   List<Service> services = [];
 
-  Device.fromXml(this.xml, [this.url]) {
-    var deviceNode = xml.getElement('device');
-    if (deviceNode == null) throw Exception('ERROR: Invalid Device XML!\n$xml');
+  Device.fromXml(this.xml, [this.url, this.urlBase]) {
+    if (xml.name.toString() != 'device') {
+      throw Exception('ERROR: Invalid Device XML!\n$xml');
+    }
 
-    urlBase = xml.getElement('URLBase')?.text ?? url;
+    deviceDescription = DeviceDescription.fromXml(xml);
 
-    deviceDescription = DeviceDescription.fromXml(deviceNode);
+    var serviceList = xml.getElement('serviceList');
+
+    if (serviceList != null) {
+      for (var serviceInformation in serviceList.childElements) {
+        services.add(Service.fromXml(serviceInformation));
+      }
+    }
   }
 
   @override
   String toString() {
-    return 'Url: $url\n${deviceDescription.toString()}';
+    StringBuffer sb = StringBuffer()
+      ..writeln('Url: $url')
+      ..writeln(deviceDescription.toString());
+
+    if (services.isNotEmpty) sb.writeln('Services');
+
+    services.forEach(sb.writeln);
+
+    return sb.toString();
   }
 
   @override
@@ -103,7 +118,13 @@ class DeviceDescription {
     udn = _xml.getElement('UDN')?.text;
     upc = _xml.getElement('UPC')?.text;
 
-    // TODO: Load icons
+    var iconList = _xml.getElement('iconList');
+
+    if (iconList != null) {
+      for (var icon in iconList.childElements) {
+        icons.add(Icon.fromXml(icon));
+      }
+    }
   }
 
   @override
@@ -114,6 +135,9 @@ class DeviceDescription {
 
 /// An upnp device icon
 class Icon {
+  /// The xml element the properties of this object were initialized from
+  final XmlElement _xml;
+
   /// The mimetype of this icon, always "image/<format>" like "image/png"
   String? mimetype;
 
@@ -128,4 +152,12 @@ class Icon {
 
   /// The url to this icon
   String? url;
+
+  Icon.fromXml(this._xml) {
+    mimetype = _xml.getElement('mimetype')?.text;
+    width = int.parse(_xml.getElement('width')?.text ?? '');
+    height = int.parse(_xml.getElement('height')?.text ?? '');
+    depth = int.parse(_xml.getElement('depth')?.text ?? '');
+    url = _xml.getElement('url')?.text;
+  }
 }

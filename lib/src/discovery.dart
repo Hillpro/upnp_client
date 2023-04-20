@@ -65,12 +65,12 @@ class DeviceDiscoverer {
     var request = await HttpClient().getUrl(Uri.parse(location));
     var response = await request.close();
 
-    final xml = XmlDocument.parse(await response.transform(utf8.decoder).join())
-        .rootElement;
+    final deviceXml =
+        XmlDocument.parse(await response.transform(utf8.decoder).join())
+            .rootElement
+            .getElement('device');
 
-    var device = Device.fromXml(xml, location);
-
-    _devices.add(device);
+    if (deviceXml != null) _devices.add(Device.fromXml(deviceXml, location));
   }
 
   void _search([String searchTarget = 'upnp:rootdevice']) {
