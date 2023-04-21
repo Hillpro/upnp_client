@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-* Device xml constructor now needs to receive a <\device/> node to be considerer valid
+* Device xml constructor now needs to receive a <device/> node to be considerer valid
 * Icon List now loading in Device class
 
 ## [0.0.4] - Dart SDK support
