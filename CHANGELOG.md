@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.5] - Services
+
+### Added
+
+* Service class with constructor/loader from xml
+
+### Changed
+
+* Device xml constructor now needs to receive a <\device/> node to be considerer valid
+* Icon List now loading in Device class
+
 ## [0.0.4] - Dart SDK support
 
 ### Changed
