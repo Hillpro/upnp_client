@@ -1,6 +1,7 @@
 import 'package:upnp_client/src/service.dart';
 import 'package:xml/xml.dart';
 
+/// An UPnP device
 class Device {
   /// The xml element the properties of this object were initialized from
   XmlElement xml;
@@ -60,6 +61,7 @@ class Device {
       deviceDescription?.uuid.hashCode ?? xml.toString().hashCode;
 }
 
+/// The general information about this UPnP device
 class DeviceDescription {
   /// The xml element the properties of this object were initialized from
   final XmlElement _xml;
@@ -133,7 +135,7 @@ class DeviceDescription {
   }
 }
 
-/// An upnp device icon
+/// An UPnP device icon
 class Icon {
   /// The xml element the properties of this object were initialized from
   final XmlElement _xml;

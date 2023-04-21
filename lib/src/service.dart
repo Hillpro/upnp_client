@@ -1,5 +1,6 @@
 import 'package:xml/xml.dart';
 
+/// An UPnP Service
 class Service {
   /// The xml element the properties of this object were initialized from
   XmlElement xml;
