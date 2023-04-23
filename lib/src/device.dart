@@ -1,4 +1,5 @@
 import 'package:upnp_client/src/service.dart';
+import 'package:upnp_client/src/xml_utils.dart';
 import 'package:xml/xml.dart';
 
 /// An UPnP device
@@ -30,21 +31,8 @@ class Device {
 
     deviceDescription = DeviceDescription.fromXml(xml);
 
-    var serviceList = xml.getElement('serviceList');
-    var deviceList = xml.getElement('deviceList');
-
-    services = _load(serviceList, (xml) => Service.fromXml(xml));
-    devices = _load(deviceList, (xml) => Device.fromXml(xml));
-  }
-
-  List<T> _load<T>(XmlElement? xml, T Function(XmlElement) create) {
-    List<T> list = <T>[];
-    if (xml != null) {
-      for (var info in xml.childElements) {
-        list.add(create(info));
-      }
-    }
-    return list;
+    services = xml.loadList('servicesList', (xml) => Service.fromXml(xml));
+    devices = xml.loadList('deviceList', (xml) => Device.fromXml(xml));
   }
 
   @override
@@ -140,14 +128,8 @@ class DeviceDescription {
     serialNumber = _xml.getElement('serialNumber')?.text;
     udn = _xml.getElement('UDN')?.text;
     upc = _xml.getElement('UPC')?.text;
-
-    var iconList = _xml.getElement('iconList');
-
-    if (iconList != null) {
-      for (var icon in iconList.childElements) {
-        icons.add(Icon.fromXml(icon));
-      }
-    }
+    
+    icons = _xml.loadList('iconList', (icon) => Icon.fromXml(icon));
   }
 
   @override
