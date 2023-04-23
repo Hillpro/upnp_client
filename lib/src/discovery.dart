@@ -7,7 +7,7 @@ import 'package:xml/xml.dart';
 
 ///
 /// [DeviceDiscoverer] uses Simple Service Discovery Protocol Based on UDP Multicast (SSDP) to issue searches and find UPnP devices and services.
-/// 
+///
 /// You can start the discoverer in either IPv4 or IPv6, or both.
 ///
 class DeviceDiscoverer {

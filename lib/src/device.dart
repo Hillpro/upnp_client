@@ -18,6 +18,9 @@ class Device {
   /// The list of provided services
   List<Service> services = [];
 
+  /// The list of embedded devices
+  List<Device> devices = [];
+
   Device.fromXml(this.xml, [this.url, this.urlBase]) {
     if (xml.name.toString() != 'device') {
       throw Exception('ERROR: Invalid Device XML!\n$xml');
@@ -26,10 +29,17 @@ class Device {
     deviceDescription = DeviceDescription.fromXml(xml);
 
     var serviceList = xml.getElement('serviceList');
+    var deviceList = xml.getElement('deviceList');
 
     if (serviceList != null) {
       for (var serviceInformation in serviceList.childElements) {
         services.add(Service.fromXml(serviceInformation));
+      }
+    }
+
+    if (deviceList != null) {
+      for (var deviceInformation in deviceList.childElements) {
+        devices.add(Device.fromXml(deviceInformation));
       }
     }
   }
@@ -43,6 +53,14 @@ class Device {
     if (services.isNotEmpty) sb.writeln('Services');
 
     services.forEach(sb.writeln);
+
+    if (devices.isNotEmpty) sb.writeln('Embedded Devices');
+
+    sb.write('\t');
+
+    for (var device in devices) {
+      sb.writeln(device.toString().replaceAll('\n', '\n\t'));
+    }
 
     return sb.toString();
   }
