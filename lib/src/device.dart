@@ -26,22 +26,25 @@ class Device {
       throw Exception('ERROR: Invalid Device XML!\n$xml');
     }
 
+    urlBase = xml.getElement('URLBase')?.text ?? url;
+
     deviceDescription = DeviceDescription.fromXml(xml);
 
     var serviceList = xml.getElement('serviceList');
     var deviceList = xml.getElement('deviceList');
 
-    if (serviceList != null) {
-      for (var serviceInformation in serviceList.childElements) {
-        services.add(Service.fromXml(serviceInformation));
-      }
-    }
+    services = _load(serviceList, (xml) => Service.fromXml(xml));
+    devices = _load(deviceList, (xml) => Device.fromXml(xml));
+  }
 
-    if (deviceList != null) {
-      for (var deviceInformation in deviceList.childElements) {
-        devices.add(Device.fromXml(deviceInformation));
+  List<T> _load<T>(XmlElement? xml, T Function(XmlElement) create) {
+    List<T> list = <T>[];
+    if (xml != null) {
+      for (var info in xml.childElements) {
+        list.add(create(info));
       }
     }
+    return list;
   }
 
   @override
