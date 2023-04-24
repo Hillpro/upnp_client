@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.6] - Embedded devices
+
+### Added
+
+* Devices now support embedded devices, loaded in constructor
+
+### Changed
+
+* Fix urlBase default value and removed it from device constructor
+
 ## [0.0.5] - Services
 
 ### Added

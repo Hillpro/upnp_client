@@ -128,7 +128,7 @@ class DeviceDescription {
     serialNumber = _xml.getElement('serialNumber')?.text;
     udn = _xml.getElement('UDN')?.text;
     upc = _xml.getElement('UPC')?.text;
-    
+
     icons = _xml.loadList('iconList', (icon) => Icon.fromXml(icon));
   }
 
