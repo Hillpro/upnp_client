@@ -22,7 +22,7 @@ class Device {
   /// The list of embedded devices
   List<Device> devices = [];
 
-  Device.fromXml(this.xml, [this.url, this.urlBase]) {
+  Device.fromXml(this.xml, [this.url]) {
     if (xml.name.toString() != 'device') {
       throw Exception('ERROR: Invalid Device XML!\n$xml');
     }
