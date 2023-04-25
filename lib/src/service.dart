@@ -25,11 +25,11 @@ class Service {
       throw Exception('ERROR: Invalid Service XML!\n$xml');
     }
 
-    serviceType = xml.getElement('serviceType')?.text;
-    serviceId = xml.getElement('serviceId')?.text;
-    url = xml.getElement('SCPDURL')?.text;
-    controlUrl = xml.getElement('controlURL')?.text;
-    eventSubUrl = xml.getElement('eventsubURL')?.text;
+    serviceType = xml.getElement('serviceType')?.innerText;
+    serviceId = xml.getElement('serviceId')?.innerText;
+    url = xml.getElement('SCPDURL')?.innerText;
+    controlUrl = xml.getElement('controlURL')?.innerText;
+    eventSubUrl = xml.getElement('eventsubURL')?.innerText;
   }
 
   @override

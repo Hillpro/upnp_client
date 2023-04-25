@@ -27,7 +27,7 @@ class Device {
       throw Exception('ERROR: Invalid Device XML!\n$xml');
     }
 
-    urlBase = xml.getElement('URLBase')?.text ?? url;
+    urlBase = xml.getElement('URLBase')?.innerText ?? url;
 
     deviceDescription = DeviceDescription.fromXml(xml);
 
@@ -116,18 +116,18 @@ class DeviceDescription {
   String? get uuid => udn?.substring('uuid:'.length);
 
   DeviceDescription.fromXml(this._xml) {
-    deviceType = _xml.getElement('deviceType')?.text;
-    friendlyName = _xml.getElement('friendlyName')?.text;
-    manufacturer = _xml.getElement('manufacturer')?.text;
-    manufacturerUrl = _xml.getElement('manufacturerUrl')?.text;
-    modelName = _xml.getElement('modelName')?.text;
-    modelNumber = _xml.getElement('modelNumber')?.text;
-    modelDescription = _xml.getElement('modelDescription')?.text;
-    modelType = _xml.getElement('modelType')?.text;
-    modelUrl = _xml.getElement('modelUrl')?.text;
-    serialNumber = _xml.getElement('serialNumber')?.text;
-    udn = _xml.getElement('UDN')?.text;
-    upc = _xml.getElement('UPC')?.text;
+    deviceType = _xml.getElement('deviceType')?.innerText;
+    friendlyName = _xml.getElement('friendlyName')?.innerText;
+    manufacturer = _xml.getElement('manufacturer')?.innerText;
+    manufacturerUrl = _xml.getElement('manufacturerUrl')?.innerText;
+    modelName = _xml.getElement('modelName')?.innerText;
+    modelNumber = _xml.getElement('modelNumber')?.innerText;
+    modelDescription = _xml.getElement('modelDescription')?.innerText;
+    modelType = _xml.getElement('modelType')?.innerText;
+    modelUrl = _xml.getElement('modelUrl')?.innerText;
+    serialNumber = _xml.getElement('serialNumber')?.innerText;
+    udn = _xml.getElement('UDN')?.innerText;
+    upc = _xml.getElement('UPC')?.innerText;
 
     icons = _xml.loadList('iconList', (icon) => Icon.fromXml(icon));
   }
@@ -159,10 +159,10 @@ class Icon {
   String? url;
 
   Icon.fromXml(this._xml) {
-    mimetype = _xml.getElement('mimetype')?.text;
-    width = int.parse(_xml.getElement('width')?.text ?? '');
-    height = int.parse(_xml.getElement('height')?.text ?? '');
-    depth = int.parse(_xml.getElement('depth')?.text ?? '');
-    url = _xml.getElement('url')?.text;
+    mimetype = _xml.getElement('mimetype')?.innerText;
+    width = int.parse(_xml.getElement('width')?.innerText ?? '');
+    height = int.parse(_xml.getElement('height')?.innerText ?? '');
+    depth = int.parse(_xml.getElement('depth')?.innerText ?? '');
+    url = _xml.getElement('url')?.innerText;
   }
 }
