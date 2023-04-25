@@ -2,50 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.0.6] - Embedded devices
+## 0.0.7
 
-### Added
+- **FEAT**: Bump dart sdk constraint to >=2.19.0
 
-* Devices now support embedded devices, loaded in constructor
+## 0.0.6
 
-### Changed
+- **NEW**: Devices now support embedded devices, loaded in constructor
+- **FIX**: urlBase default value and removed it from device constructor
 
-* Fix urlBase default value and removed it from device constructor
+## 0.0.5
 
-## [0.0.5] - Services
+- **BREAKING**: Device xml constructor now needs to receive a \<device/> node to be considerer valid
+- **NEW**: Added Service class with constructor/loader from xml
+- **FEAT**: Icon List now loading in Device class
 
-### Added
+## 0.0.4
 
-* Service class with constructor/loader from xml
+- **FEAT**: Decrease dart sdk constraint to >=2.12.0
 
-### Changed
+## 0.0.3
 
-* Device xml constructor now needs to receive a \<device/> node to be considerer valid
-* Icon List now loading in Device class
+- **BREAKING**: Discoverer search function now private
+- **NEW**: Added Device class with constructor/loader from xml
+- **NEW**: Added getDevices method in DeviceDiscoverer to get list of devices
 
-## [0.0.4] - Dart SDK support
+## 0.0.2
 
-### Changed
+- **NEW**: SSDP Discovery M-Search request
 
-* Now support dart sdk for >=2.12.0 <3.0.0
+## 0.0.1
 
-## [0.0.3] - Devices
-
-### Added
-
-* Device class with constructor/loader from xml
-* getDevices method in DeviceDiscoverer to get list of devices
-
-### Changed
-
-* Discoverer search function now private
-
-## [0.0.2] - SSDP Discovery
-
-### Added
-
-* SSDP M-Search request working
-
-## [0.0.1]
-
-### First attemp to publish package
+- First attemp to publish package
