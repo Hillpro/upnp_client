@@ -13,26 +13,26 @@ import 'package:xml/xml.dart';
 class DeviceDiscoverer {
   final _sockets = <RawDatagramSocket>[];
   final _devices = StreamController<Device>.broadcast();
+  static const _supportedAddressTypes = [
+    InternetAddressType.IPv4,
+    InternetAddressType.IPv6
+  ];
 
   ///
   /// Starts the Discoverer.
   ///
-  /// Starts a socket to listen to UPnP devices responses for a given [InternetAddressType] and [port]
-  /// If the address type is [InternetAddressType.any], a socket will be created for every supported types.
+  /// Starts a socket to listen to UPnP devices responses on a given [port]
+  /// Listen for all given [InternetAddressType]
+  /// By default, a socket will be created for every supported types.
   /// Currently, IP version 4 (IPv4), IP version 6 (IPv6) are supported.
-  ///
-  /// Throws an [ArgumentError] if the [InternetAddressType] is not supported.
   ///
   Future<void> start(
       {int port = 0,
-      // TODO: Change how to receive addressType(s) choice
-      InternetAddressType addressType = InternetAddressType.any}) async {
-    if (addressType == InternetAddressType.unix) {
-      throw ArgumentError("Internet Address Type not valid");
-    }
-
-    for (var address in _getAddresses(addressType)) {
-      await _createSocket(address, port);
+      List<InternetAddressType> addressTypes = _supportedAddressTypes}) async {
+    for (var addressType in addressTypes) {
+      if (_supportedAddressTypes.contains(addressType)) {
+        await _createSocket(_getBroadcastAddress(addressType), port);
+      }
     }
   }
 
@@ -47,19 +47,17 @@ class DeviceDiscoverer {
         if (packet == null) return;
 
         final data = utf8.decode(packet.data);
-        final parts = data.split('\r\n');
+        final headers = data.split('\r\n');
 
-        if (parts
-                .indexWhere((element) => element.contains('HTTP/1.1 200 OK')) ==
-            -1) return;
+        if (headers.indexWhere((e) => e.contains('HTTP/1.1 200 OK')) == -1) return;
 
-        _addDevice(parts);
+        _addDevice(headers);
       }
     });
   }
 
-  void _addDevice(List<String> message) async {
-    var location = message.firstWhere(
+  void _addDevice(List<String> headers) async {
+    var location = headers.firstWhere(
         (element) => element.toUpperCase().contains('LOCATION'),
         orElse: () => '');
 
@@ -102,27 +100,27 @@ class DeviceDiscoverer {
   ///
   Future<List<Device>> getDevices(
       {Duration timeout = const Duration(seconds: 5)}) async {
-    final list = <Device>[];
+    final List<Device> devices = [];
 
-    final sub = _devices.stream
-        .listen((device) => {if (!list.contains(device)) list.add(device)});
+    var sub = _devices.stream
+        .listen((d) => {if (!devices.contains(d)) devices.add(d)});
 
     _search();
     await Future.delayed(timeout);
     await sub.cancel();
 
-    return list;
+    return devices;
   }
 
-  List<InternetAddress> _getAddresses(InternetAddressType addressType) {
-    if (addressType == InternetAddressType.any) {
-      return [InternetAddress.anyIPv4, InternetAddress.anyIPv6];
+  InternetAddress _getBroadcastAddress(InternetAddressType addressType) {
+    switch (addressType) {
+      case InternetAddressType.IPv4:
+        return InternetAddress.anyIPv4;
+      case InternetAddressType.IPv6:
+        return InternetAddress.anyIPv6;
+      default:
+        throw ArgumentError("Internet Address Type not valid");
     }
-    return [
-      addressType == InternetAddressType.IPv4
-          ? InternetAddress.anyIPv4
-          : InternetAddress.anyIPv6
-    ];
   }
 
   InternetAddress _getMulticastAddress(InternetAddressType addressType) {
