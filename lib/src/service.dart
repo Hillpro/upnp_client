@@ -6,10 +6,10 @@ class Service {
   XmlElement xml;
 
   /// The service type
-  String? serviceType;
+  String? type;
 
   /// The service ID
-  String? serviceId;
+  String? id;
 
   /// The location of the service description
   String? url;
@@ -25,8 +25,8 @@ class Service {
       throw Exception('ERROR: Invalid Service XML!\n$xml');
     }
 
-    serviceType = xml.getElement('serviceType')?.innerText;
-    serviceId = xml.getElement('serviceId')?.innerText;
+    type = xml.getElement('serviceType')?.innerText;
+    id = xml.getElement('serviceId')?.innerText;
     url = xml.getElement('SCPDURL')?.innerText;
     controlUrl = xml.getElement('controlURL')?.innerText;
     eventSubUrl = xml.getElement('eventsubURL')?.innerText;
@@ -36,7 +36,7 @@ class Service {
   String toString() {
     StringBuffer sb = StringBuffer()
       ..writeln('Url: $url')
-      ..write('ServiceType: $serviceId');
+      ..write('ServiceType: $type');
 
     return sb.toString();
   }

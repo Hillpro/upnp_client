@@ -14,7 +14,7 @@ class Device {
   String? urlBase;
 
   /// The device description information
-  DeviceDescription? deviceDescription;
+  DeviceDescription? description;
 
   /// The list of provided services
   List<Service> services = [];
@@ -29,28 +29,28 @@ class Device {
 
     urlBase = xml.getElement('URLBase')?.innerText ?? url;
 
-    deviceDescription = DeviceDescription.fromXml(xml);
+    description = DeviceDescription.fromXml(xml);
 
-    services = xml.loadList('serviceList', (xml) => Service.fromXml(xml));
-    devices = xml.loadList('deviceList', (xml) => Device.fromXml(xml));
+    services = xml.loadList('serviceList', Service.fromXml);
+    devices = xml.loadList('deviceList', Device.fromXml);
   }
 
   @override
   String toString() {
     StringBuffer sb = StringBuffer()
       ..writeln('Url: $url')
-      ..writeln(deviceDescription.toString());
+      ..writeln(description.toString());
 
     if (services.isNotEmpty) sb.writeln('Services');
 
-    services.forEach(sb.writeln);
+    for (var service in services) {
+      sb.writeln('\t${service.toString().replaceAll('\n', '\n\t')}');
+    }
 
     if (devices.isNotEmpty) sb.writeln('Embedded Devices');
 
-    sb.write('\t');
-
     for (var device in devices) {
-      sb.writeln(device.toString().replaceAll('\n', '\n\t'));
+      sb.writeln('\t${device.toString().replaceAll('\n', '\n\t')}');
     }
 
     return sb.toString();
@@ -60,14 +60,14 @@ class Device {
   bool operator ==(Object other) {
     return other.runtimeType == runtimeType &&
         other is Device &&
-        other.deviceDescription?.uuid != null &&
-        deviceDescription?.uuid != null &&
-        deviceDescription!.uuid == other.deviceDescription!.uuid;
+        other.description?.uuid != null &&
+        description?.uuid != null &&
+        description!.uuid == other.description!.uuid;
   }
 
   @override
   int get hashCode =>
-      deviceDescription?.uuid.hashCode ?? xml.toString().hashCode;
+      description?.uuid.hashCode ?? xml.toString().hashCode;
 }
 
 /// The general information about this UPnP device
@@ -134,7 +134,7 @@ class DeviceDescription {
 
   @override
   String toString() {
-    return 'FriendlyName: $friendlyName, uuid: $uuid';
+    return 'FriendlyName: $friendlyName, uuid: $uuid\nDeviceType: $deviceType';
   }
 }
 
