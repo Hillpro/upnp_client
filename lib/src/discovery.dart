@@ -103,7 +103,7 @@ class DeviceDiscoverer {
     final List<Device> devices = [];
 
     var sub = _devices.stream
-        .listen((d) => {if (!devices.contains(d)) devices.add(d)});
+        .listen((d) {if (!devices.contains(d)) devices.add(d);});
 
     _search();
     await Future.delayed(timeout);
