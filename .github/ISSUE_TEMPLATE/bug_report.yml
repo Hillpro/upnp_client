@@ -32,12 +32,12 @@ body:
 
   - type: textarea
     validations:
-      required: true
+      required: false
     attributes:
       label: "Teachability, documentation, adoption, migration strategy"
       description: "If you can, explain how we could improve our documentation relating this issue?"
 
-  - type: textarea
+  - type: input
     validations:
       required: true
     attributes:
