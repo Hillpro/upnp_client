@@ -1,6 +1,6 @@
 name: upnp_client
 description: Universal Plug and Play (UPnP) Client Implementation. Will support IGD control as well as DLNA
-version: 0.0.9
+version: 0.0.10
 
 homepage: https://github.com/Hillpro/upnp_client
 repository: https://github.com/Hillpro/upnp_client
