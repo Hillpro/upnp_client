@@ -49,7 +49,8 @@ class DeviceDiscoverer {
         final data = utf8.decode(packet.data);
         final headers = data.split('\r\n');
 
-        if (headers.indexWhere((e) => e.contains('HTTP/1.1 200 OK')) == -1) return;
+        if (headers.indexWhere((e) => e.contains('HTTP/1.1 200 OK')) == -1)
+          return;
 
         _addDevice(headers);
       }
@@ -102,8 +103,9 @@ class DeviceDiscoverer {
       {Duration timeout = const Duration(seconds: 5)}) async {
     final List<Device> devices = [];
 
-    var sub = _devices.stream
-        .listen((d) {if (!devices.contains(d)) devices.add(d);});
+    var sub = _devices.stream.listen((d) {
+      if (!devices.contains(d)) devices.add(d);
+    });
 
     _search();
     await Future.delayed(timeout);

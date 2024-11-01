@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.0.9
+
+- **INFO**: Automatic publish workflow
+            Adjust dart formatting
+
 ## 0.0.8
 
 - **FEAT**: Bump dart sdk constraint to >=3.0.0 <4.0.0

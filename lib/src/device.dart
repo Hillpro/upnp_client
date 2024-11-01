@@ -66,8 +66,7 @@ class Device {
   }
 
   @override
-  int get hashCode =>
-      description?.uuid.hashCode ?? xml.toString().hashCode;
+  int get hashCode => description?.uuid.hashCode ?? xml.toString().hashCode;
 }
 
 /// The general information about this UPnP device
