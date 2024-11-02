@@ -1,8 +1,11 @@
+import 'package:upnp_client/src/xml_utils.dart';
 import 'package:xml/xml.dart';
 
-/// An UPnP Service
+/// An UPnP 
+@XmlClass()
 class Service {
   /// The xml element the properties of this object were initialized from
+  @XmlIgnore()
   XmlElement xml;
 
   /// The service type
@@ -24,12 +27,8 @@ class Service {
     if (xml.name.toString() != 'service') {
       throw Exception('ERROR: Invalid Service XML!\n$xml');
     }
-
-    type = xml.getElement('serviceType')?.innerText;
-    id = xml.getElement('serviceId')?.innerText;
-    url = xml.getElement('SCPDURL')?.innerText;
-    controlUrl = xml.getElement('controlURL')?.innerText;
-    eventSubUrl = xml.getElement('eventsubURL')?.innerText;
+    
+    xml.loadProperties(this);
   }
 
   @override

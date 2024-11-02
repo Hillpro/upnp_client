@@ -50,9 +50,15 @@ extension XmlElementUtils on XmlElement {
         propertyName = propertyName ?? MirrorSystem.getName(value.simpleName);
 
         XmlElement? element = getElement(propertyName);
-        var text = element?.innerText;
+        if (element == null) continue;
 
-        reflectee.setField(value.simpleName, text);
+        String text = element.innerText;
+
+        if (value.type == reflectType(int)) {
+          reflectee.setField(value.simpleName, int.tryParse(text));
+        } else {
+          reflectee.setField(value.simpleName, text);
+        }
       }
     }
   }

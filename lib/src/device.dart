@@ -133,8 +133,10 @@ class DeviceDescription {
 }
 
 /// An UPnP device icon
+@XmlClass()
 class Icon {
   /// The xml element the properties of this object were initialized from
+  @XmlIgnore()
   final XmlElement _xml;
 
   /// The mimetype of this icon, always "image/<format>" like "image/png"
@@ -153,10 +155,6 @@ class Icon {
   String? url;
 
   Icon.fromXml(this._xml) {
-    mimetype = _xml.getElement('mimetype')?.innerText;
-    width = int.parse(_xml.getElement('width')?.innerText ?? '');
-    height = int.parse(_xml.getElement('height')?.innerText ?? '');
-    depth = int.parse(_xml.getElement('depth')?.innerText ?? '');
-    url = _xml.getElement('url')?.innerText;
+    _xml.loadProperties(this);
   }
 }
