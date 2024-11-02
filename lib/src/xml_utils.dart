@@ -1,3 +1,5 @@
+import 'dart:mirrors';
+
 import 'package:xml/xml.dart';
 
 extension XmlElementUtils on XmlElement {
@@ -11,4 +13,64 @@ extension XmlElementUtils on XmlElement {
     }
     return list;
   }
+
+  void loadProperties<T>(T t) {
+    ClassMirror xmlPropertyMirror = reflectClass(XmlProperty);
+    ClassMirror xmlIgnoreMirror = reflectClass(XmlIgnore);
+    ClassMirror xmlClassMirror = reflectClass(XmlClass);
+
+    var reflectee = reflect(t);
+    var xmlClass = false;
+
+    // Check if the class is an XmlClass
+    for (var metadata in reflectee.type.metadata) {
+      if (metadata.type == xmlClassMirror) {
+        xmlClass = true;
+        break;
+      }
+    }
+
+    for (var value in reflectee.type.declarations.values) {
+      // Check if declatation is a variable declaration
+      if (value is! VariableMirror) continue;
+
+      // Verify that the variable definition doesn't use XmlIgnore() annotation
+      if (value.metadata.indexWhere((m) => m.type == xmlIgnoreMirror) != -1) continue;
+
+      String? propertyName;
+
+      for (var metadata in value.metadata) {
+        if (metadata.type == xmlPropertyMirror) {
+          XmlProperty property = metadata.reflectee;
+          propertyName = property.propertyName;
+        }
+      }
+
+      if (xmlClass || propertyName != null) {
+        propertyName = propertyName ?? MirrorSystem.getName(value.simpleName);
+
+        XmlElement? element = getElement(propertyName);
+        var text = element?.innerText;
+
+        reflectee.setField(value.simpleName, text);
+      }
+    }
+  }
 }
+
+class XmlProperty {
+  final String? propertyName;
+
+  const XmlProperty([this.propertyName]);
+}
+
+class XmlClass {
+  final String? documentName;
+
+  const XmlClass([this.documentName]);
+}
+
+class XmlIgnore {
+  const XmlIgnore();
+}
+

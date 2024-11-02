@@ -60,8 +60,9 @@ class DeviceDiscoverer {
         final data = utf8.decode(packet.data);
         final headers = data.split('\r\n');
 
-        if (headers.indexWhere((e) => e.contains('HTTP/1.1 200 OK')) == -1)
+        if (headers.indexWhere((e) => e.contains('HTTP/1.1 200 OK')) == -1) {
           return;
+        }
 
         _addDevice(headers);
       }
