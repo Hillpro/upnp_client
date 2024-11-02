@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.0.11
+
+- **FEAT**: New method to stop the discoverer
+
 ## 0.0.10
 
 - **INFO**: Add dart fix to workflow

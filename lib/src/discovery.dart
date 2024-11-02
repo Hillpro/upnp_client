@@ -36,6 +36,17 @@ class DeviceDiscoverer {
     }
   }
 
+  ///
+  /// Stops the Discoverer.
+  /// 
+  /// Closes all udp sockets
+  ///
+  void stop() {
+    for (var socket in _sockets) {
+      socket.close();
+    }
+  }
+
   Future<void> _createSocket(InternetAddress address, [int port = 0]) async {
     final socket = await RawDatagramSocket.bind(address, port);
     _sockets.add(socket);
