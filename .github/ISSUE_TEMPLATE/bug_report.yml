@@ -6,13 +6,6 @@ body:
     attributes:
       value: |
         Thanks for taking the time to fill out this bug report!
-  - type: checkboxes
-    attributes:
-      label: "Is there an existing bug report for this issue?"
-      description: "Please search [here](../issues) to see if an issue already exists for the bug you are reporting"
-      options:
-      - label: "I have searched the existing issues"
-        required: true
 
   - type: textarea
     validations:
