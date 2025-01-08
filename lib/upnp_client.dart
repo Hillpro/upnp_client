@@ -1,3 +1,3 @@
-library upnp_client;
+library;
 
 export 'src/discovery.dart';

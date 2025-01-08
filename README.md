@@ -19,7 +19,11 @@ dart pub add upnp_client
 
 ## Usage
 
-Refer to the example folder
+Refer to the example folder, e.g.
+```
+dart run example/upnp_client_example.dart
+```
+
 
 ### To use on an iOS device (Required for iOS 14+)
 

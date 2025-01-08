@@ -3,17 +3,18 @@ import 'dart:io';
 import 'package:upnp_client/src/device.dart';
 import 'package:upnp_client/upnp_client.dart';
 
-main() {
+main(List<String> args) {
   print("Searching for devices");
 
-  searchDevices().then((devices) =>
-      devices.isEmpty ? print('No devices found') : devices.forEach(print));
+  searchDevices(searchTarget: args.isNotEmpty ? args[0] : null).then(
+      (devices) =>
+          devices.isEmpty ? print('No devices found') : devices.forEach(print));
 }
 
-Future<List<Device>> searchDevices() async {
+Future<List<Device>> searchDevices({String? searchTarget}) async {
   var deviceDiscover = DeviceDiscoverer();
   await deviceDiscover.start(addressTypes: [InternetAddressType.IPv4]);
-  var devices = await deviceDiscover.getDevices();
+  var devices = await deviceDiscover.getDevices(searchTarget: searchTarget);
 
   deviceDiscover.stop();
   return devices;
