@@ -93,7 +93,7 @@ class DeviceDiscoverer {
     }
   }
 
-  void _search(String searchTarget) {
+  void _search([String searchTarget = 'upnp:rootdevice']) {
     final buff = StringBuffer()
       ..writeln('M-SEARCH * HTTP/1.1')
       ..writeln('HOST: 239.255.255.250:1900')

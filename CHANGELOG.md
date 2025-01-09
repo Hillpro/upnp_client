@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.0.12
+
+- **FEAT**: Add searchTarget in discovery getDevices() method
+- **FIX**: Skip closed connections and partial reponses details
+
 ## 0.0.11
 
 - **FEAT**: New method to stop the discoverer
