@@ -38,7 +38,7 @@ class DeviceDiscoverer {
 
   ///
   /// Stops the Discoverer.
-  /// 
+  ///
   /// Closes all udp sockets
   ///
   void stop() {
@@ -60,8 +60,9 @@ class DeviceDiscoverer {
         final data = utf8.decode(packet.data);
         final headers = data.split('\r\n');
 
-        if (headers.indexWhere((e) => e.contains('HTTP/1.1 200 OK')) == -1)
+        if (headers.indexWhere((e) => e.contains('HTTP/1.1 200 OK')) == -1) {
           return;
+        }
 
         _addDevice(headers);
       }
@@ -78,14 +79,18 @@ class DeviceDiscoverer {
     location = location.substring(location.indexOf('http'));
 
     var request = await HttpClient().getUrl(Uri.parse(location));
-    var response = await request.close();
+    try {
+      var response = await request.close();
+      final deviceXml =
+          XmlDocument.parse(await response.transform(utf8.decoder).join())
+              .rootElement
+              .getElement('device');
 
-    final deviceXml =
-        XmlDocument.parse(await response.transform(utf8.decoder).join())
-            .rootElement
-            .getElement('device');
-
-    if (deviceXml != null) _devices.add(Device.fromXml(deviceXml, location));
+      if (deviceXml != null) _devices.add(Device.fromXml(deviceXml, location));
+    } on Exception catch (e) {
+      // If the device is not reachable, ignore it.  save something?
+      print('Error: $e while trying to get device from $location');
+    }
   }
 
   void _search([String searchTarget = 'upnp:rootdevice']) {
@@ -108,17 +113,19 @@ class DeviceDiscoverer {
   }
 
   ///
-  /// Search for UPnP devices for a given [timeout] time, then returns the list
+  /// Search for UPnP devices matching [searchTarget]
+  /// for a given [timeout] time, then returns the list
   ///
   Future<List<Device>> getDevices(
-      {Duration timeout = const Duration(seconds: 5)}) async {
+      {Duration timeout = const Duration(seconds: 5),
+      String? searchTarget}) async {
     final List<Device> devices = [];
 
     var sub = _devices.stream.listen((d) {
       if (!devices.contains(d)) devices.add(d);
     });
 
-    _search();
+    _search(searchTarget ?? 'upnp:rootdevice');
     await Future.delayed(timeout);
     await sub.cancel();
 

@@ -142,7 +142,7 @@ class Icon {
   /// The xml element the properties of this object were initialized from
   final XmlElement _xml;
 
-  /// The mimetype of this icon, always "image/<format>" like "image/png"
+  /// The mimetype of this icon, always `image/<format>` like `image/png`
   String? mimetype;
 
   /// The amount of horizontal pixels
