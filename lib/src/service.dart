@@ -7,6 +7,9 @@ import 'package:upnp_client/src/action.dart';
 import 'package:upnp_client/src/data_type.dart';
 import 'package:collection/collection.dart';
 
+final String _soapEnvelopeNs = 'http://schemas.xmlsoap.org/soap/envelope/';
+final String _soapEncodingNs = 'http://schemas.xmlsoap.org/soap/encoding/';
+
 /// An UPnP Service
 class Service {
   /// The device that provides this service
@@ -48,12 +51,79 @@ class Service {
 
     final Uri deviceUri = Uri.parse(device.url!);
     final HttpClientRequest request =
-    await HttpClient().getUrl(deviceUri.resolve(url!));
+        await HttpClient().getUrl(deviceUri.resolve(url!));
     final HttpClientResponse response = await request.close();
     final XmlElement serviceDescXml =
         XmlDocument.parse(await response.transform(utf8.decoder).join())
             .rootElement;
     return ServiceDescription.fromXml(this, serviceDescXml!);
+  }
+
+  Future<XmlElement> sendToControlUrl(String name, XmlElement body) async {
+    if (device.url == null || controlUrl == null)
+      throw Exception('ERROR: Invalid Device or Service Control URL');
+
+    final XmlBuilder builder = XmlBuilder();
+    builder.element('Envelope',
+        namespace: _soapEnvelopeNs,
+        namespaces: {_soapEnvelopeNs: 's'},
+        attributes: {'s:encodingStyle': _soapEncodingNs}, nest: () {
+      builder.element('Body', namespace: _soapEnvelopeNs, nest: body);
+    });
+    final String xmlReq = builder.buildDocument().toXmlString();
+
+    final HttpClientRequest request =
+        await HttpClient().postUrl(Uri.parse(device.url!).resolve(controlUrl!));
+    request.headers.set('SOAPACTION', '"$type#$name"');
+    request.headers.set('Content-Type', 'text/xml; charset="utf-8"');
+    request.headers.set('Content-Length', utf8.encode(xmlReq).length);
+    request.write(xmlReq);
+    final HttpClientResponse response = await request.close();
+
+    final String respBody =
+        await response.cast<List<int>>().transform(utf8.decoder).join();
+    final XmlDocument xmlResp = XmlDocument.parse(respBody);
+    if (xmlResp.rootElement.name.local != 'Envelope') {
+      throw Exception('ERROR: Invalid SOAP response!\n$respBody');
+    }
+
+    if (response.statusCode != 200) {
+      throw Exception('ERROR: Failed posting action $name!\n$respBody');
+    }
+
+    final XmlElement? xmlRespBody =
+        xmlResp.rootElement.getElement('Body', namespace: _soapEnvelopeNs);
+    if (xmlRespBody == null) {
+      throw Exception('ERROR: Invalid SOAP response!\n$respBody');
+    }
+
+    return xmlRespBody!;
+  }
+
+  Future<Map<String, String>> invokeAction(
+      String name, Map<String, dynamic> args) async {
+    if (type == null) throw Exception('ERROR: Invalid Service Type');
+
+    final XmlBuilder builder = XmlBuilder();
+    builder.element(name, namespace: type!, namespaces: {type!: 'u'}, nest: () {
+      for (final it in args.entries) {
+        builder.element(it.key, nest: it.value);
+      }
+    });
+
+    final XmlElement respXml =
+        await sendToControlUrl(name, builder.buildDocument().rootElement);
+
+    final XmlElement? respEl =
+        respXml?.getElement('${name}Response', namespace: type!);
+
+    final List<XmlElement> respArgs =
+        (respEl?.children ?? []).whereType<XmlElement>().toList();
+    final Map<String, String> map = <String, String>{};
+    for (final arg in respArgs) {
+      map[arg.name.local] = arg.innerText;
+    }
+    return map;
   }
 
   @override
