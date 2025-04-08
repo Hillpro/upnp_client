@@ -1,7 +1,11 @@
 import 'package:xml/xml.dart';
+import 'package:upnp_client/src/device.dart';
 
 /// An UPnP Service
 class Service {
+  /// The device that provides this service
+  final Device device;
+
   /// The xml element the properties of this object were initialized from
   final XmlElement xml;
 
@@ -20,7 +24,7 @@ class Service {
   /// The location for service eventing
   String? eventSubUrl;
 
-  Service.fromXml(this.xml) {
+  Service.fromXml(this.device, this.xml) {
     if (xml.name.toString() != 'service') {
       throw Exception('ERROR: Invalid Service XML!\n$xml');
     }

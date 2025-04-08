@@ -31,7 +31,8 @@ class Device {
 
     description = DeviceDescription.fromXml(xml);
 
-    services = xml.loadList('serviceList', Service.fromXml);
+    services =
+        xml.loadList('serviceList', (xml) => Service.fromXml(this, xml));
     devices = xml.loadList('deviceList', Device.fromXml);
   }
 
