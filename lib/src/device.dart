@@ -5,7 +5,7 @@ import 'package:xml/xml.dart';
 /// An UPnP device
 class Device {
   /// The xml element the properties of this object were initialized from
-  XmlElement xml;
+  final XmlElement xml;
 
   /// The location of the device
   String? url;
