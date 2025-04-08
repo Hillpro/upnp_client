@@ -34,10 +34,6 @@ class Service {
 
   @override
   String toString() {
-    StringBuffer sb = StringBuffer()
-      ..writeln('Url: $url')
-      ..write('ServiceType: $type');
-
-    return sb.toString();
+    return 'Service{type: $type, id: $id}';
   }
 }

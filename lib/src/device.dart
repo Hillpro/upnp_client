@@ -38,21 +38,15 @@ class Device {
   @override
   String toString() {
     StringBuffer sb = StringBuffer()
-      ..writeln('Url: $url')
-      ..writeln(description.toString());
-
-    if (services.isNotEmpty) sb.writeln('Services');
-
+      ..write('Device{url: $url, description: $description, services: [');
     for (var service in services) {
-      sb.writeln('\t${service.toString().replaceAll('\n', '\n\t')}');
+      sb.write('\n\t${service.toString().replaceAll('\n', '\n\t')}');
     }
-
-    if (devices.isNotEmpty) sb.writeln('Embedded Devices');
-
+    sb.write('\n], devices: [');
     for (var device in devices) {
-      sb.writeln('\t${device.toString().replaceAll('\n', '\n\t')}');
+      sb.writeln('\n\t${device.toString().replaceAll('\n', '\n\t')}');
     }
-
+    sb.write('\n]}');
     return sb.toString();
   }
 
@@ -133,7 +127,7 @@ class DeviceDescription {
 
   @override
   String toString() {
-    return 'FriendlyName: $friendlyName, uuid: $uuid\nDeviceType: $deviceType';
+    return 'DeviceDescription{deviceType: $deviceType, friendlyName: $friendlyName, manufacturer: $manufacturer, modelName: $modelName, modelNumber: $modelNumber, modelDescription: $modelDescription, serialNumber: $serialNumber, udn: $udn, upc: $upc}';
   }
 }
 
@@ -163,5 +157,10 @@ class Icon {
     height = int.parse(_xml.getElement('height')?.innerText ?? '');
     depth = int.parse(_xml.getElement('depth')?.innerText ?? '');
     url = _xml.getElement('url')?.innerText;
+  }
+
+  @override
+  String toString() {
+    return 'Icon{mimetype: $mimetype, width: $width, height: $height, depth: $depth, url: $url}';
   }
 }
