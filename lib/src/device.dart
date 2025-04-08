@@ -1,6 +1,10 @@
 import 'package:upnp_client/src/service.dart';
 import 'package:upnp_client/src/xml_utils.dart';
 import 'package:xml/xml.dart';
+import 'package:collection/collection.dart';
+import 'package:upnp_client/src/common_services/rendering_control.dart';
+import 'package:upnp_client/src/common_services/connection_manager.dart';
+import 'package:upnp_client/src/common_services/av_transport.dart';
 
 /// An UPnP device
 class Device {
@@ -32,9 +36,18 @@ class Device {
     description = DeviceDescription.fromXml(xml);
 
     services =
-        xml.loadList('serviceList', (xml) => Service.fromXml(this, xml));
+        xml.loadList('serviceList', (xml) => Service.fromXmlTyped(this, xml));
     devices = xml.loadList('deviceList', Device.fromXml);
   }
+
+  RenderingControlService? renderingControlService() =>
+      services.whereType<RenderingControlService>().singleOrNull;
+
+  ConnectionManagerService? connectionManagerService() =>
+      services.whereType<ConnectionManagerService>().singleOrNull;
+
+  AvTransportService? avTransportService() =>
+      services.whereType<AvTransportService>().singleOrNull;
 
   @override
   String toString() {

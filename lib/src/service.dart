@@ -6,6 +6,9 @@ import 'package:upnp_client/src/xml_utils.dart';
 import 'package:upnp_client/src/action.dart';
 import 'package:upnp_client/src/data_type.dart';
 import 'package:collection/collection.dart';
+import 'package:upnp_client/src/common_services/rendering_control.dart';
+import 'package:upnp_client/src/common_services/connection_manager.dart';
+import 'package:upnp_client/src/common_services/av_transport.dart';
 
 final String _soapEnvelopeNs = 'http://schemas.xmlsoap.org/soap/envelope/';
 final String _soapEncodingNs = 'http://schemas.xmlsoap.org/soap/encoding/';
@@ -32,6 +35,22 @@ class Service {
 
   /// The location for service eventing
   String? eventSubUrl;
+
+  static Service fromXmlTyped(Device device, XmlElement xml) {
+    if (xml.name.toString() != 'service') {
+      throw Exception('ERROR: Invalid Service XML!\n$xml');
+    }
+
+    return switch (xml.getElement('serviceType')?.innerText) {
+      'urn:schemas-upnp-org:service:RenderingControl:1' =>
+        RenderingControlService.fromXml(device, xml),
+      'urn:schemas-upnp-org:service:ConnectionManager:1' =>
+        ConnectionManagerService.fromXml(device, xml),
+      'urn:schemas-upnp-org:service:AVTransport:1' =>
+        AvTransportService.fromXml(device, xml),
+      _ => Service.fromXml(device, xml)
+    };
+  }
 
   Service.fromXml(this.device, this.xml) {
     if (xml.name.toString() != 'service') {
