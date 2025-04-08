@@ -1,5 +1,7 @@
 import 'package:xml/xml.dart';
+import 'dart:convert';
 import 'package:upnp_client/src/device.dart';
+import 'dart:io';
 import 'package:upnp_client/src/xml_utils.dart';
 import 'package:upnp_client/src/action.dart';
 import 'package:upnp_client/src/data_type.dart';
@@ -38,6 +40,20 @@ class Service {
     url = xml.getElement('SCPDURL')?.innerText;
     controlUrl = xml.getElement('controlURL')?.innerText;
     eventSubUrl = xml.getElement('eventsubURL')?.innerText;
+  }
+
+  Future<ServiceDescription> getDescription() async {
+    if (device.url == null || url == null)
+      throw Exception('ERROR: Invalid Device or Service URL!');
+
+    final Uri deviceUri = Uri.parse(device.url!);
+    final HttpClientRequest request =
+    await HttpClient().getUrl(deviceUri.resolve(url!));
+    final HttpClientResponse response = await request.close();
+    final XmlElement serviceDescXml =
+        XmlDocument.parse(await response.transform(utf8.decoder).join())
+            .rootElement;
+    return ServiceDescription.fromXml(this, serviceDescXml!);
   }
 
   @override
