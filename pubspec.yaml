@@ -1,6 +1,6 @@
 name: upnp_client
-description: Universal Plug and Play (UPnP) Client Implementation. Will support IGD control as well as DLNA
-version: 0.0.12
+description: Universal Plug and Play (UPnP) Client Implementation. Supports DLNA media casting. Will support IGD control in the future
+version: 1.0.0
 
 homepage: https://github.com/Hillpro/upnp_client
 repository: https://github.com/Hillpro/upnp_client
@@ -10,6 +10,7 @@ environment:
 
 dependencies:
   xml: ^6.5.0
+  collection: ^1.19.1
 
 dev_dependencies:
-  lints: ^4.0.0
+  lints: ^5.0.0

@@ -5,7 +5,7 @@
 [![Supported Dart SDK](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2FHillpro%2Fupnp_client%2Frefs%2Fheads%2Fmain%2Fpubspec.yaml&query=%24.environment.sdk&label=dart&color=blue)](https://dart.dev/)
 [![Package Version](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2FHillpro%2Fupnp_client%2Frefs%2Fheads%2Fmain%2Fpubspec.yaml&query=%24.version&label=version&color=orange)](https://pub.dev/packages/upnp_client)
 [![Package download statistics](https://img.shields.io/badge/downloads-342/month-brightgreen.svg)](https://pub.dev/packages/upnp_client/score)
-[![Development Status](https://img.shields.io/badge/status-alpha-red.svg)](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)
+[![Development Status](https://img.shields.io/badge/status-beta-red.svg)](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)
 
 Universal Plug and Play (UPnP) Client Implementation. Supports IGD control as well as DLNA
 
@@ -25,9 +25,20 @@ dart run example/upnp_client_example.dart
 ```
 
 
+### To use on an Android device
+
+You must add the following permissions in your AndroidManifest.xml
+
+``` xml
+<uses-permission android:name="android.permission.INTERNET"/>
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+<uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" android.usesPermissionFlags="neverForLocation"/>
+```
+
+
 ### To use on an iOS device (Required for iOS 14+)
 
-You need to follow these steps to use Multicast Networking fucntionnalities on any iOS device:
+You need to follow these steps to use Multicast Networking functionalities on any iOS device:
 
 1. Go to https://developer.apple.com/contact/request/networking-multicast and fill out the form for your app.
 2. Wait for the acceptance email (Approx. 30 days).

@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:upnp_client/src/device.dart';
 import 'package:upnp_client/upnp_client.dart';
 
 main(List<String> args) {
