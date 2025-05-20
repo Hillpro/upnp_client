@@ -1,11 +1,15 @@
 import 'package:upnp_client/src/service.dart';
 import 'package:upnp_client/src/xml_utils.dart';
 import 'package:xml/xml.dart';
+import 'package:collection/collection.dart';
+import 'package:upnp_client/src/common_services/rendering_control.dart';
+import 'package:upnp_client/src/common_services/connection_manager.dart';
+import 'package:upnp_client/src/common_services/av_transport.dart';
 
 /// An UPnP device
 class Device {
   /// The xml element the properties of this object were initialized from
-  XmlElement xml;
+  final XmlElement xml;
 
   /// The location of the device
   String? url;
@@ -31,28 +35,32 @@ class Device {
 
     description = DeviceDescription.fromXml(xml);
 
-    services = xml.loadList('serviceList', Service.fromXml);
+    services =
+        xml.loadList('serviceList', (xml) => Service.fromXmlTyped(this, xml));
     devices = xml.loadList('deviceList', Device.fromXml);
   }
+
+  RenderingControlService? renderingControlService() =>
+      services.whereType<RenderingControlService>().singleOrNull;
+
+  ConnectionManagerService? connectionManagerService() =>
+      services.whereType<ConnectionManagerService>().singleOrNull;
+
+  AvTransportService? avTransportService() =>
+      services.whereType<AvTransportService>().singleOrNull;
 
   @override
   String toString() {
     StringBuffer sb = StringBuffer()
-      ..writeln('Url: $url')
-      ..writeln(description.toString());
-
-    if (services.isNotEmpty) sb.writeln('Services');
-
+      ..write('Device{url: $url, description: $description, services: [');
     for (var service in services) {
-      sb.writeln('\t${service.toString().replaceAll('\n', '\n\t')}');
+      sb.write('\n\t${service.toString().replaceAll('\n', '\n\t')}');
     }
-
-    if (devices.isNotEmpty) sb.writeln('Embedded Devices');
-
+    sb.write('\n], devices: [');
     for (var device in devices) {
-      sb.writeln('\t${device.toString().replaceAll('\n', '\n\t')}');
+      sb.writeln('\n\t${device.toString().replaceAll('\n', '\n\t')}');
     }
-
+    sb.write('\n]}');
     return sb.toString();
   }
 
@@ -133,7 +141,7 @@ class DeviceDescription {
 
   @override
   String toString() {
-    return 'FriendlyName: $friendlyName, uuid: $uuid\nDeviceType: $deviceType';
+    return 'DeviceDescription{deviceType: $deviceType, friendlyName: $friendlyName, manufacturer: $manufacturer, modelName: $modelName, modelNumber: $modelNumber, modelDescription: $modelDescription, serialNumber: $serialNumber, udn: $udn, upc: $upc}';
   }
 }
 
@@ -163,5 +171,10 @@ class Icon {
     height = int.parse(_xml.getElement('height')?.innerText ?? '');
     depth = int.parse(_xml.getElement('depth')?.innerText ?? '');
     url = _xml.getElement('url')?.innerText;
+  }
+
+  @override
+  String toString() {
+    return 'Icon{mimetype: $mimetype, width: $width, height: $height, depth: $depth, url: $url}';
   }
 }
