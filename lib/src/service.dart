@@ -65,8 +65,9 @@ class Service {
   }
 
   Future<ServiceDescription> getDescription() async {
-    if (device.url == null || url == null)
+    if (device.url == null || url == null) {
       throw Exception('ERROR: Invalid Device or Service URL!');
+    }
 
     final Uri deviceUri = Uri.parse(device.url!);
     final HttpClientRequest request =
@@ -75,12 +76,13 @@ class Service {
     final XmlElement serviceDescXml =
         XmlDocument.parse(await response.transform(utf8.decoder).join())
             .rootElement;
-    return ServiceDescription.fromXml(this, serviceDescXml!);
+    return ServiceDescription.fromXml(this, serviceDescXml);
   }
 
   Future<XmlElement> sendToControlUrl(String name, XmlElement body) async {
-    if (device.url == null || controlUrl == null)
+    if (device.url == null || controlUrl == null) {
       throw Exception('ERROR: Invalid Device or Service Control URL');
+    }
 
     final XmlBuilder builder = XmlBuilder();
     builder.element('Envelope',
@@ -112,11 +114,12 @@ class Service {
 
     final XmlElement? xmlRespBody =
         xmlResp.rootElement.getElement('Body', namespace: _soapEnvelopeNs);
+
     if (xmlRespBody == null) {
       throw Exception('ERROR: Invalid SOAP response!\n$respBody');
     }
 
-    return xmlRespBody!;
+    return xmlRespBody;
   }
 
   Future<Map<String, String>> invokeAction(
@@ -134,7 +137,7 @@ class Service {
         await sendToControlUrl(name, builder.buildDocument().rootElement);
 
     final XmlElement? respEl =
-        respXml?.getElement('${name}Response', namespace: type!);
+        respXml.getElement('${name}Response', namespace: type!);
 
     final List<XmlElement> respArgs =
         (respEl?.children ?? []).whereType<XmlElement>().toList();

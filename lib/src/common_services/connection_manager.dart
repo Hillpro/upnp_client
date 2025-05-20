@@ -1,12 +1,10 @@
 import 'package:upnp_client/src/service.dart';
-import 'package:upnp_client/src/device.dart';
-import 'package:xml/xml.dart';
 
 /// An UPnP ConnectionManager service
 /// https://upnp.org/specs/av/UPnP-av-ConnectionManager-v1-Service.pdf
 class ConnectionManagerService extends Service {
-  ConnectionManagerService.fromXml(Device device, XmlElement xml)
-      : super.fromXml(device, xml);
+  ConnectionManagerService.fromXml(super.device, super.xml)
+      : super.fromXml();
 
   Future<ProtocolInfoData> getProtocolInfo() async {
     final args = await invokeAction('GetProtocolInfo', {});
@@ -49,8 +47,9 @@ class ProtocolInfo {
 
   static ProtocolInfo fromString(String protocolInfoString) {
     final List<String> parts = protocolInfoString.split(':');
-    if (parts.length != 4)
+    if (parts.length != 4) {
       throw ArgumentError('Invalid protocol info string: $protocolInfoString');
+    }
 
     return ProtocolInfo._(parts[0], parts[1], parts[2], parts[3]);
   }

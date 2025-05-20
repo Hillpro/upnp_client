@@ -2,7 +2,6 @@ import 'package:collection/collection.dart';
 import 'package:upnp_client/src/xml_utils.dart';
 import 'package:upnp_client/src/service.dart';
 import 'package:xml/xml.dart';
-import 'package:upnp_client/src/device.dart';
 
 /// An UPnP Action
 class Action {

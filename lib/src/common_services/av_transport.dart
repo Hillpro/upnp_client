@@ -1,13 +1,11 @@
-import 'package:upnp_client/src/device.dart';
 import 'package:upnp_client/src/service.dart';
-import 'package:xml/xml.dart';
 import 'package:collection/collection.dart';
 
 /// An UPnP AVTransport service
 /// https://upnp.org/specs/av/UPnP-av-AVTransport-v1-Service.pdf
 class AvTransportService extends Service {
-  AvTransportService.fromXml(Device device, XmlElement xml)
-      : super.fromXml(device, xml);
+  AvTransportService.fromXml(super.device, super.xml)
+      : super.fromXml();
 
   Future<void> setAVTransportURI(String uri,
       {String metadata = '', int instanceId = 0}) async {
@@ -196,9 +194,9 @@ class TransportInfo {
     required String? currentTransportState,
     required String? currentTransportStatus,
     required this.currentSpeed,
-  })  : this.currentTransportState = TransportState.values
+  })  : currentTransportState = TransportState.values
             .firstWhereOrNull((state) => state.value == currentTransportState),
-        this.currentTransportStatus = TransportStatus.values.firstWhereOrNull(
+        currentTransportStatus = TransportStatus.values.firstWhereOrNull(
             (status) => status.value == currentTransportStatus);
 
   @override
@@ -226,9 +224,9 @@ class PositionInfo {
     required this.absTime,
     required String? relCount,
     required String? absCount,
-  })  : this.track = int.tryParse(track ?? ''),
-        this.relCount = int.tryParse(relCount ?? ''),
-        this.absCount = int.tryParse(absCount ?? '');
+  })  : track = int.tryParse(track ?? ''),
+        relCount = int.tryParse(relCount ?? ''),
+        absCount = int.tryParse(absCount ?? '');
 
   @override
   String toString() {

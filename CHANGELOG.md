@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.0
+
+- **FEAT**: First DLNA Implementation for media casting
+- **INFO**: Add Documentation for Android permissions
+
 ## 0.0.12
 
 - **FEAT**: Add searchTarget in discovery getDevices() method
