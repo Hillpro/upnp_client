@@ -13,10 +13,22 @@ import 'package:xml/xml.dart';
 class DeviceDiscoverer {
   final _sockets = <RawDatagramSocket>[];
   final _devices = StreamController<Device>.broadcast();
+  final _errors = StreamController<void>.broadcast();
   static const _supportedAddressTypes = [
     InternetAddressType.IPv4,
     InternetAddressType.IPv6
   ];
+
+  ///
+  /// A stream of discovered UPnP devices.
+  ///
+  Stream<Device> get devices => _devices.stream;
+
+  ///
+  /// A stream of errors occurred during the discovery process.
+  /// These errors are not fatal and will not stop the discovery process.
+  ///
+  Stream<void> get errors => _errors.stream;
 
   ///
   /// Starts the Discoverer.
@@ -87,9 +99,8 @@ class DeviceDiscoverer {
               .getElement('device');
 
       if (deviceXml != null) _devices.add(Device.fromXml(deviceXml, location));
-    } on Exception catch (e) {
-      // If the device is not reachable, ignore it.  save something?
-      print('Error: $e while trying to get device from $location');
+    } on Exception catch (e, st) {
+      _errors.addError(e, st);
     }
   }
 
