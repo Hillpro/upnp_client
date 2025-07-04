@@ -78,7 +78,7 @@ class DeviceDiscoverer {
 
         _addDevice(headers);
       }
-    });
+    }, onError: _errors.addError);
   }
 
   void _addDevice(List<String> headers) async {
@@ -118,7 +118,7 @@ class DeviceDiscoverer {
       var multicastAddress = _getMulticastAddress(socket.address.type);
       // Repeated 3 times beacuse UDP messages might be lost
       for (var i = 0; i < 3; i++) {
-        socket.send(data, multicastAddress, 1900);
+        runZonedGuarded(() => socket.send(data, multicastAddress, 1900), _errors.addError);
       }
     }
   }
