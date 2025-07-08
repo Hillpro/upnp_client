@@ -66,11 +66,15 @@ class DeviceDiscoverer {
     socket.listen((event) {
       if (event == RawSocketEvent.read) {
         final packet = socket.receive();
-
         if (packet == null) return;
 
-        final data = utf8.decode(packet.data);
-        final headers = data.split('\r\n');
+        final List<String> headers;
+        try {
+          headers = utf8.decode(packet.data).split('\r\n');
+        } on FormatException catch (e,st) {
+          _errors.addError(e, st);
+          return;
+        }
 
         if (headers.indexWhere((e) => e.contains('HTTP/1.1 200 OK')) == -1) {
           return;
