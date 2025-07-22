@@ -95,7 +95,12 @@ class DeviceDiscoverer {
     location = location.substring(location.indexOf('http'));
 
     try {
-      final request = await HttpClient().getUrl(Uri.parse(location));
+      final locationUri = Uri.parse(location);
+      if (locationUri.host.isEmpty) {
+        return;
+      }
+
+      final request = await HttpClient().getUrl(locationUri);
       final response = await request.close();
       final deviceXml =
           XmlDocument.parse(await response.transform(utf8.decoder).join())
