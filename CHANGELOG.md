@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.1
+
+- **FEAT**: Improving error handling
+
 ## 1.0.0
 
 - **FEAT**: First DLNA Implementation for media casting

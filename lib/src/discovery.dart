@@ -13,10 +13,22 @@ import 'package:xml/xml.dart';
 class DeviceDiscoverer {
   final _sockets = <RawDatagramSocket>[];
   final _devices = StreamController<Device>.broadcast();
+  final _errors = StreamController<void>.broadcast();
   static const _supportedAddressTypes = [
     InternetAddressType.IPv4,
     InternetAddressType.IPv6
   ];
+
+  ///
+  /// A stream of discovered UPnP devices.
+  ///
+  Stream<Device> get devices => _devices.stream;
+
+  ///
+  /// A stream of errors occurred during the discovery process.
+  /// These errors are not fatal and will not stop the discovery process.
+  ///
+  Stream<void> get errors => _errors.stream;
 
   ///
   /// Starts the Discoverer.
@@ -54,11 +66,15 @@ class DeviceDiscoverer {
     socket.listen((event) {
       if (event == RawSocketEvent.read) {
         final packet = socket.receive();
-
         if (packet == null) return;
 
-        final data = utf8.decode(packet.data);
-        final headers = data.split('\r\n');
+        final List<String> headers;
+        try {
+          headers = utf8.decode(packet.data).split('\r\n');
+        } on FormatException catch (e, st) {
+          _errors.addError(e, st);
+          return;
+        }
 
         if (headers.indexWhere((e) => e.contains('HTTP/1.1 200 OK')) == -1) {
           return;
@@ -66,7 +82,7 @@ class DeviceDiscoverer {
 
         _addDevice(headers);
       }
-    });
+    }, onError: _errors.addError);
   }
 
   void _addDevice(List<String> headers) async {
@@ -78,18 +94,22 @@ class DeviceDiscoverer {
 
     location = location.substring(location.indexOf('http'));
 
-    var request = await HttpClient().getUrl(Uri.parse(location));
     try {
-      var response = await request.close();
+      final locationUri = Uri.parse(location);
+      if (locationUri.host.isEmpty) {
+        return;
+      }
+
+      final request = await HttpClient().getUrl(locationUri);
+      final response = await request.close();
       final deviceXml =
           XmlDocument.parse(await response.transform(utf8.decoder).join())
               .rootElement
               .getElement('device');
 
       if (deviceXml != null) _devices.add(Device.fromXml(deviceXml, location));
-    } on Exception catch (e) {
-      // If the device is not reachable, ignore it.  save something?
-      print('Error: $e while trying to get device from $location');
+    } on Exception catch (e, st) {
+      _errors.addError(e, st);
     }
   }
 
@@ -107,7 +127,8 @@ class DeviceDiscoverer {
       var multicastAddress = _getMulticastAddress(socket.address.type);
       // Repeated 3 times beacuse UDP messages might be lost
       for (var i = 0; i < 3; i++) {
-        socket.send(data, multicastAddress, 1900);
+        runZonedGuarded(
+            () => socket.send(data, multicastAddress, 1900), _errors.addError);
       }
     }
   }
