@@ -71,7 +71,7 @@ class DeviceDiscoverer {
         final List<String> headers;
         try {
           headers = utf8.decode(packet.data).split('\r\n');
-        } on FormatException catch (e,st) {
+        } on FormatException catch (e, st) {
           _errors.addError(e, st);
           return;
         }
@@ -127,7 +127,8 @@ class DeviceDiscoverer {
       var multicastAddress = _getMulticastAddress(socket.address.type);
       // Repeated 3 times beacuse UDP messages might be lost
       for (var i = 0; i < 3; i++) {
-        runZonedGuarded(() => socket.send(data, multicastAddress, 1900), _errors.addError);
+        runZonedGuarded(
+            () => socket.send(data, multicastAddress, 1900), _errors.addError);
       }
     }
   }

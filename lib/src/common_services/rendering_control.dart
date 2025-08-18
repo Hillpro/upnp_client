@@ -3,8 +3,7 @@ import 'package:upnp_client/src/service.dart';
 /// An UPnP RenderingControl service
 /// https://upnp.org/specs/av/UPnP-av-RenderingControl-v1-Service.pdf
 class RenderingControlService extends Service {
-  RenderingControlService.fromXml(super.device, super.xml)
-      : super.fromXml();
+  RenderingControlService.fromXml(super.device, super.xml) : super.fromXml();
 
   Future<int> getVolume({int instanceId = 0, String channel = 'Master'}) async {
     final args = await invokeAction(
