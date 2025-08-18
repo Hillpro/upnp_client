@@ -3,8 +3,7 @@ import 'package:upnp_client/src/service.dart';
 /// An UPnP ConnectionManager service
 /// https://upnp.org/specs/av/UPnP-av-ConnectionManager-v1-Service.pdf
 class ConnectionManagerService extends Service {
-  ConnectionManagerService.fromXml(super.device, super.xml)
-      : super.fromXml();
+  ConnectionManagerService.fromXml(super.device, super.xml) : super.fromXml();
 
   Future<ProtocolInfoData> getProtocolInfo() async {
     final args = await invokeAction('GetProtocolInfo', {});

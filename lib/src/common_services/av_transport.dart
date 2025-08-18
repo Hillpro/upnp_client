@@ -4,8 +4,7 @@ import 'package:collection/collection.dart';
 /// An UPnP AVTransport service
 /// https://upnp.org/specs/av/UPnP-av-AVTransport-v1-Service.pdf
 class AvTransportService extends Service {
-  AvTransportService.fromXml(super.device, super.xml)
-      : super.fromXml();
+  AvTransportService.fromXml(super.device, super.xml) : super.fromXml();
 
   Future<void> setAVTransportURI(String uri,
       {String metadata = '', int instanceId = 0}) async {
