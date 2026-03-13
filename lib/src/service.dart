@@ -70,13 +70,18 @@ class Service {
     }
 
     final Uri deviceUri = Uri.parse(device.url!);
-    final HttpClientRequest request =
-        await HttpClient().getUrl(deviceUri.resolve(url!));
-    final HttpClientResponse response = await request.close();
-    final XmlElement serviceDescXml =
-        XmlDocument.parse(await response.transform(utf8.decoder).join())
-            .rootElement;
-    return ServiceDescription.fromXml(this, serviceDescXml);
+    final httpClient = HttpClient();
+    try {
+      final HttpClientRequest request =
+          await httpClient.getUrl(deviceUri.resolve(url!));
+      final HttpClientResponse response = await request.close();
+      final XmlElement serviceDescXml =
+          XmlDocument.parse(await response.transform(utf8.decoder).join())
+              .rootElement;
+      return ServiceDescription.fromXml(this, serviceDescXml);
+    } finally {
+      httpClient.close();
+    }
   }
 
   Future<XmlElement> sendToControlUrl(String name, XmlElement body) async {
@@ -93,33 +98,38 @@ class Service {
     });
     final String xmlReq = builder.buildDocument().toXmlString();
 
-    final HttpClientRequest request =
-        await HttpClient().postUrl(Uri.parse(device.url!).resolve(controlUrl!));
-    request.headers.set('SOAPACTION', '"$type#$name"');
-    request.headers.set('Content-Type', 'text/xml; charset="utf-8"');
-    request.headers.set('Content-Length', utf8.encode(xmlReq).length);
-    request.write(xmlReq);
-    final HttpClientResponse response = await request.close();
+    final httpClient = HttpClient();
+    try {
+      final HttpClientRequest request =
+          await httpClient.postUrl(Uri.parse(device.url!).resolve(controlUrl!));
+      request.headers.set('SOAPACTION', '"$type#$name"');
+      request.headers.set('Content-Type', 'text/xml; charset="utf-8"');
+      request.headers.set('Content-Length', utf8.encode(xmlReq).length);
+      request.write(xmlReq);
+      final HttpClientResponse response = await request.close();
 
-    final String respBody =
-        await response.cast<List<int>>().transform(utf8.decoder).join();
-    final XmlDocument xmlResp = XmlDocument.parse(respBody);
-    if (xmlResp.rootElement.name.local != 'Envelope') {
-      throw Exception('ERROR: Invalid SOAP response!\n$respBody');
+      final String respBody =
+          await response.cast<List<int>>().transform(utf8.decoder).join();
+      final XmlDocument xmlResp = XmlDocument.parse(respBody);
+      if (xmlResp.rootElement.name.local != 'Envelope') {
+        throw Exception('ERROR: Invalid SOAP response!\n$respBody');
+      }
+
+      if (response.statusCode != 200) {
+        throw Exception('ERROR: Failed posting action $name!\n$respBody');
+      }
+
+      final XmlElement? xmlRespBody =
+          xmlResp.rootElement.getElement('Body', namespace: _soapEnvelopeNs);
+
+      if (xmlRespBody == null) {
+        throw Exception('ERROR: Invalid SOAP response!\n$respBody');
+      }
+
+      return xmlRespBody;
+    } finally {
+      httpClient.close();
     }
-
-    if (response.statusCode != 200) {
-      throw Exception('ERROR: Failed posting action $name!\n$respBody');
-    }
-
-    final XmlElement? xmlRespBody =
-        xmlResp.rootElement.getElement('Body', namespace: _soapEnvelopeNs);
-
-    if (xmlRespBody == null) {
-      throw Exception('ERROR: Invalid SOAP response!\n$respBody');
-    }
-
-    return xmlRespBody;
   }
 
   Future<Map<String, String>> invokeAction(

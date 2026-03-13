@@ -94,13 +94,14 @@ class DeviceDiscoverer {
 
     location = location.substring(location.indexOf('http'));
 
+    final httpClient = HttpClient();
     try {
       final locationUri = Uri.parse(location);
       if (locationUri.host.isEmpty) {
         return;
       }
 
-      final request = await HttpClient().getUrl(locationUri);
+      final request = await httpClient.getUrl(locationUri);
       final response = await request.close();
       final deviceXml =
           XmlDocument.parse(await response.transform(utf8.decoder).join())
@@ -110,6 +111,8 @@ class DeviceDiscoverer {
       if (deviceXml != null) _devices.add(Device.fromXml(deviceXml, location));
     } on Exception catch (e, st) {
       _errors.addError(e, st);
+    } finally {
+      httpClient.close();
     }
   }
 
