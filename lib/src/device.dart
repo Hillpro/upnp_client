@@ -167,9 +167,9 @@ class Icon {
 
   Icon.fromXml(this._xml) {
     mimetype = _xml.getElement('mimetype')?.innerText;
-    width = int.parse(_xml.getElement('width')?.innerText ?? '');
-    height = int.parse(_xml.getElement('height')?.innerText ?? '');
-    depth = int.parse(_xml.getElement('depth')?.innerText ?? '');
+    width = int.tryParse(_xml.getElement('width')?.innerText ?? '');
+    height = int.tryParse(_xml.getElement('height')?.innerText ?? '');
+    depth = int.tryParse(_xml.getElement('depth')?.innerText ?? '');
     url = _xml.getElement('url')?.innerText;
   }
 
