@@ -97,7 +97,7 @@ class DeviceDiscoverer {
           return;
         }
 
-        if (headers.indexWhere((e) => e.contains('HTTP/1.1 200 OK')) == -1) {
+        if (headers.indexWhere((e) => e.contains('200 OK')) == -1) {
           return;
         }
 
@@ -144,12 +144,14 @@ class DeviceDiscoverer {
       final targets = _getMulticastTargets(socket.address.type);
 
       for (var target in targets) {
+        // UDA 1.1 §1.3.2 - Search request with M-SEARCH
         final buff = StringBuffer()
           ..writeln('M-SEARCH * HTTP/1.1')
           ..writeln('HOST: ${target.host}')
           ..writeln('MAN: "ssdp:discover"')
           ..writeln('MX: 3')
-          ..writeln('ST: $searchTarget\n');
+          ..writeln('ST: $searchTarget')
+          ..writeln('USER-AGENT: ${Platform.operatingSystem}/${Platform.operatingSystemVersion} UPnP/1.1 Dart/${Platform.version}\n');
 
         final data = utf8.encode(buff.toString().replaceAll('\n', '\r\n'));
 
