@@ -5,6 +5,8 @@ import 'dart:io';
 import 'package:upnp_client/src/device.dart';
 import 'package:xml/xml.dart';
 
+const _descriptionTimeout = Duration(seconds: 30);
+
 ///
 /// [DeviceDiscoverer] uses Simple Service Discovery Protocol Based on UDP Multicast (SSDP) to issue searches and find UPnP devices and services.
 ///
@@ -114,6 +116,7 @@ class DeviceDiscoverer {
     location = location.substring(location.indexOf('http'));
 
     final httpClient = HttpClient();
+    httpClient.connectionTimeout = _descriptionTimeout;
     try {
       final locationUri = Uri.parse(location);
       if (locationUri.host.isEmpty) {
@@ -121,7 +124,8 @@ class DeviceDiscoverer {
       }
 
       final request = await httpClient.getUrl(locationUri);
-      final response = await request.close();
+      final response =
+          await request.close().timeout(_descriptionTimeout);
       final deviceXml =
           XmlDocument.parse(await response.transform(utf8.decoder).join())
               .rootElement
