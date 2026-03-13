@@ -41,12 +41,16 @@ class Service {
       throw Exception('ERROR: Invalid Service XML!\n$xml');
     }
 
-    return switch (xml.getElement('serviceType')?.innerText) {
-      'urn:schemas-upnp-org:service:RenderingControl:1' =>
+    // Strip version suffix for version-independent matching (UDA 1.1 §1.3.2)
+    final serviceType = xml.getElement('serviceType')?.innerText;
+    final serviceTypeBase = serviceType?.replaceFirst(RegExp(r':\d+$'), ':');
+
+    return switch (serviceTypeBase) {
+      'urn:schemas-upnp-org:service:RenderingControl:' =>
         RenderingControlService.fromXml(device, xml),
-      'urn:schemas-upnp-org:service:ConnectionManager:1' =>
+      'urn:schemas-upnp-org:service:ConnectionManager:' =>
         ConnectionManagerService.fromXml(device, xml),
-      'urn:schemas-upnp-org:service:AVTransport:1' =>
+      'urn:schemas-upnp-org:service:AVTransport:' =>
         AvTransportService.fromXml(device, xml),
       _ => Service.fromXml(device, xml)
     };
