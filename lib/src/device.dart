@@ -66,11 +66,12 @@ class Device {
 
   @override
   bool operator ==(Object other) {
-    return other.runtimeType == runtimeType &&
-        other is Device &&
-        other.description?.uuid != null &&
-        description?.uuid != null &&
-        description!.uuid == other.description!.uuid;
+    if (identical(this, other)) return true;
+    if (other is! Device) return false;
+    final thisUuid = description?.uuid;
+    final otherUuid = other.description?.uuid;
+    if (thisUuid != null && otherUuid != null) return thisUuid == otherUuid;
+    return false;
   }
 
   @override
