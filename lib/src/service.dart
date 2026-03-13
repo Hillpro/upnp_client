@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:upnp_client/src/xml_utils.dart';
 import 'package:upnp_client/src/action.dart';
 import 'package:upnp_client/src/data_type.dart';
+import 'package:upnp_client/src/upnp_exception.dart';
 import 'package:collection/collection.dart';
 import 'package:upnp_client/src/common_services/rendering_control.dart';
 import 'package:upnp_client/src/common_services/connection_manager.dart';
@@ -126,15 +127,16 @@ class Service {
         throw Exception('ERROR: Invalid SOAP response!\n$respBody');
       }
 
-      if (response.statusCode != 200) {
-        throw Exception('ERROR: Failed posting action $name!\n$respBody');
-      }
-
       final XmlElement? xmlRespBody =
           xmlResp.rootElement.getElement('Body', namespace: _soapEnvelopeNs);
 
       if (xmlRespBody == null) {
         throw Exception('ERROR: Invalid SOAP response!\n$respBody');
+      }
+
+      if (response.statusCode != 200) {
+        throw UPnPException.tryParseFromBody(xmlRespBody, actionName: name) ??
+            Exception('ERROR: Failed posting action $name!\n$respBody');
       }
 
       return xmlRespBody;

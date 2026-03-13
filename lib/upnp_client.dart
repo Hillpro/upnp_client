@@ -3,6 +3,7 @@ library;
 export 'src/discovery.dart';
 export 'src/device.dart';
 export 'src/service.dart';
+export 'src/upnp_exception.dart';
 export 'src/data_type.dart';
 export 'src/action.dart';
 
