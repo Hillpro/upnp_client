@@ -57,6 +57,7 @@ class DeviceDiscoverer {
     for (var socket in _sockets) {
       socket.close();
     }
+    _sockets.clear();
   }
 
   Future<void> _createSocket(InternetAddress address, [int port = 0]) async {
@@ -85,7 +86,7 @@ class DeviceDiscoverer {
     }, onError: _errors.addError);
   }
 
-  void _addDevice(List<String> headers) async {
+  Future<void> _addDevice(List<String> headers) async {
     var location = headers.firstWhere(
         (element) => element.toUpperCase().contains('LOCATION'),
         orElse: () => '');

@@ -13,6 +13,9 @@ import 'package:upnp_client/src/common_services/av_transport.dart';
 final String _soapEnvelopeNs = 'http://schemas.xmlsoap.org/soap/envelope/';
 final String _soapEncodingNs = 'http://schemas.xmlsoap.org/soap/encoding/';
 
+/// UDA 1.1 §3.2.2 — actions must complete within 30 seconds.
+const _actionTimeout = Duration(seconds: 30);
+
 /// An UPnP Service
 class Service {
   /// The device that provides this service
@@ -75,10 +78,12 @@ class Service {
 
     final Uri deviceUri = Uri.parse(device.url!);
     final httpClient = HttpClient();
+    httpClient.connectionTimeout = _actionTimeout;
     try {
       final HttpClientRequest request =
           await httpClient.getUrl(deviceUri.resolve(url!));
-      final HttpClientResponse response = await request.close();
+      final HttpClientResponse response =
+          await request.close().timeout(_actionTimeout);
       final XmlElement serviceDescXml =
           XmlDocument.parse(await response.transform(utf8.decoder).join())
               .rootElement;
@@ -103,6 +108,7 @@ class Service {
     final String xmlReq = builder.buildDocument().toXmlString();
 
     final httpClient = HttpClient();
+    httpClient.connectionTimeout = _actionTimeout;
     try {
       final HttpClientRequest request =
           await httpClient.postUrl(Uri.parse(device.url!).resolve(controlUrl!));
@@ -110,7 +116,8 @@ class Service {
       request.headers.set('Content-Type', 'text/xml; charset="utf-8"');
       request.headers.set('Content-Length', utf8.encode(xmlReq).length);
       request.write(xmlReq);
-      final HttpClientResponse response = await request.close();
+      final HttpClientResponse response =
+          await request.close().timeout(_actionTimeout);
 
       final String respBody =
           await response.cast<List<int>>().transform(utf8.decoder).join();
