@@ -121,7 +121,10 @@ class DeviceDescription {
 
   List<Icon> icons = [];
 
-  String? get uuid => udn?.substring('uuid:'.length);
+  /// UDA 1.1 §1.1.4 — UDN MUST begin with "uuid:", but some UDA 1.0 devices
+  /// may not comply. Falls back to the raw UDN as the identifier.
+  String? get uuid =>
+      udn?.startsWith('uuid:') == true ? udn?.substring(5) : udn;
 
   DeviceDescription.fromXml(this._xml) {
     deviceType = _xml.getElement('deviceType')?.innerText;
