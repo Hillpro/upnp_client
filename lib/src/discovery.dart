@@ -114,21 +114,24 @@ class DeviceDiscoverer {
   }
 
   void _search([String searchTarget = 'upnp:rootdevice']) {
-    final buff = StringBuffer()
-      ..writeln('M-SEARCH * HTTP/1.1')
-      ..writeln('HOST: 239.255.255.250:1900')
-      ..writeln('MAN: "ssdp:discover"')
-      ..writeln('MX: 3')
-      ..writeln('ST: $searchTarget\n');
-
-    final data = utf8.encode(buff.toString().replaceAll('\n', '\r\n'));
-
     for (var socket in _sockets) {
-      var multicastAddress = _getMulticastAddress(socket.address.type);
-      // Repeated 3 times beacuse UDP messages might be lost
-      for (var i = 0; i < 3; i++) {
-        runZonedGuarded(
-            () => socket.send(data, multicastAddress, 1900), _errors.addError);
+      final targets = _getMulticastTargets(socket.address.type);
+
+      for (var target in targets) {
+        final buff = StringBuffer()
+          ..writeln('M-SEARCH * HTTP/1.1')
+          ..writeln('HOST: ${target.host}')
+          ..writeln('MAN: "ssdp:discover"')
+          ..writeln('MX: 3')
+          ..writeln('ST: $searchTarget\n');
+
+        final data = utf8.encode(buff.toString().replaceAll('\n', '\r\n'));
+
+        // Repeated 3 times because UDP messages might be lost
+        for (var i = 0; i < 3; i++) {
+          runZonedGuarded(
+              () => socket.send(data, target.address, 1900), _errors.addError);
+        }
       }
     }
   }
@@ -164,14 +167,32 @@ class DeviceDiscoverer {
     }
   }
 
-  InternetAddress _getMulticastAddress(InternetAddressType addressType) {
+  /// Returns the multicast targets for a given address type.
+  ///
+  /// Per UPnP Device Architecture 2.0 (section A.4.5):
+  /// - IPv4: single target 239.255.255.250:1900
+  /// - IPv6: Link-Local scope FF02::C (mandatory) and
+  ///   Site-Local scope FF05::C (for discovery across subnets)
+  List<_MulticastTarget> _getMulticastTargets(InternetAddressType addressType) {
     switch (addressType) {
       case InternetAddressType.IPv4:
-        return InternetAddress('239.255.255.250');
+        return [
+          _MulticastTarget(InternetAddress('239.255.255.250'), '239.255.255.250:1900'),
+        ];
       case InternetAddressType.IPv6:
-        return InternetAddress('FF05::C');
+        return [
+          _MulticastTarget(InternetAddress('FF02::C'), '[FF02::C]:1900'),
+          _MulticastTarget(InternetAddress('FF05::C'), '[FF05::C]:1900'),
+        ];
       default:
         throw ArgumentError("Internet Address Type not valid");
     }
   }
+}
+
+class _MulticastTarget {
+  final InternetAddress address;
+  final String host;
+
+  const _MulticastTarget(this.address, this.host);
 }
