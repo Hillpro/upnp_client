@@ -40,10 +40,12 @@ class DeviceDiscoverer {
   ///
   Future<void> start(
       {int port = 0,
+      int multicastHops = 2,
       List<InternetAddressType> addressTypes = _supportedAddressTypes}) async {
     for (var addressType in addressTypes) {
       if (_supportedAddressTypes.contains(addressType)) {
-        await _createSocket(_getBroadcastAddress(addressType), port);
+        await _createSocket(
+            _getBroadcastAddress(addressType), port, multicastHops);
       }
     }
   }
@@ -72,8 +74,12 @@ class DeviceDiscoverer {
     _errors.close();
   }
 
-  Future<void> _createSocket(InternetAddress address, [int port = 0]) async {
+  Future<void> _createSocket(InternetAddress address,
+      [int port = 0, int multicastHops = 2]) async {
     final socket = await RawDatagramSocket.bind(address, port);
+
+    // UDA 1.1 §1.3.2: TTL SHOULD default to 2 and SHOULD be configurable.
+    socket.multicastHops = multicastHops;
     _sockets.add(socket);
 
     socket.listen((event) {
