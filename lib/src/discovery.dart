@@ -60,6 +60,18 @@ class DeviceDiscoverer {
     _sockets.clear();
   }
 
+  ///
+  /// Disposes the Discoverer.
+  ///
+  /// Stops discovery and closes all streams. After calling this,
+  /// the discoverer cannot be reused.
+  ///
+  void dispose() {
+    stop();
+    _devices.close();
+    _errors.close();
+  }
+
   Future<void> _createSocket(InternetAddress address, [int port = 0]) async {
     final socket = await RawDatagramSocket.bind(address, port);
     _sockets.add(socket);
