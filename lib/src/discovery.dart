@@ -5,6 +5,8 @@ import 'dart:io';
 import 'package:upnp_client/src/device.dart';
 import 'package:xml/xml.dart';
 
+const _descriptionTimeout = Duration(seconds: 30);
+
 ///
 /// [DeviceDiscoverer] uses Simple Service Discovery Protocol Based on UDP Multicast (SSDP) to issue searches and find UPnP devices and services.
 ///
@@ -40,10 +42,12 @@ class DeviceDiscoverer {
   ///
   Future<void> start(
       {int port = 0,
+      int multicastHops = 2,
       List<InternetAddressType> addressTypes = _supportedAddressTypes}) async {
     for (var addressType in addressTypes) {
       if (_supportedAddressTypes.contains(addressType)) {
-        await _createSocket(_getBroadcastAddress(addressType), port);
+        await _createSocket(
+            _getBroadcastAddress(addressType), port, multicastHops);
       }
     }
   }
@@ -57,10 +61,27 @@ class DeviceDiscoverer {
     for (var socket in _sockets) {
       socket.close();
     }
+    _sockets.clear();
   }
 
-  Future<void> _createSocket(InternetAddress address, [int port = 0]) async {
+  ///
+  /// Disposes the Discoverer.
+  ///
+  /// Stops discovery and closes all streams. After calling this,
+  /// the discoverer cannot be reused.
+  ///
+  void dispose() {
+    stop();
+    _devices.close();
+    _errors.close();
+  }
+
+  Future<void> _createSocket(InternetAddress address,
+      [int port = 0, int multicastHops = 2]) async {
     final socket = await RawDatagramSocket.bind(address, port);
+
+    // UDA 1.1 §1.3.2: TTL SHOULD default to 2 and SHOULD be configurable.
+    socket.multicastHops = multicastHops;
     _sockets.add(socket);
 
     socket.listen((event) {
@@ -76,7 +97,7 @@ class DeviceDiscoverer {
           return;
         }
 
-        if (headers.indexWhere((e) => e.contains('HTTP/1.1 200 OK')) == -1) {
+        if (headers.indexWhere((e) => e.contains('200 OK')) == -1) {
           return;
         }
 
@@ -85,7 +106,7 @@ class DeviceDiscoverer {
     }, onError: _errors.addError);
   }
 
-  void _addDevice(List<String> headers) async {
+  Future<void> _addDevice(List<String> headers) async {
     var location = headers.firstWhere(
         (element) => element.toUpperCase().contains('LOCATION'),
         orElse: () => '');
@@ -94,14 +115,16 @@ class DeviceDiscoverer {
 
     location = location.substring(location.indexOf('http'));
 
+    final httpClient = HttpClient();
+    httpClient.connectionTimeout = _descriptionTimeout;
     try {
       final locationUri = Uri.parse(location);
       if (locationUri.host.isEmpty) {
         return;
       }
 
-      final request = await HttpClient().getUrl(locationUri);
-      final response = await request.close();
+      final request = await httpClient.getUrl(locationUri);
+      final response = await request.close().timeout(_descriptionTimeout);
       final deviceXml =
           XmlDocument.parse(await response.transform(utf8.decoder).join())
               .rootElement
@@ -110,25 +133,33 @@ class DeviceDiscoverer {
       if (deviceXml != null) _devices.add(Device.fromXml(deviceXml, location));
     } on Exception catch (e, st) {
       _errors.addError(e, st);
+    } finally {
+      httpClient.close();
     }
   }
 
   void _search([String searchTarget = 'upnp:rootdevice']) {
-    final buff = StringBuffer()
-      ..writeln('M-SEARCH * HTTP/1.1')
-      ..writeln('HOST: 239.255.255.250:1900')
-      ..writeln('MAN: "ssdp:discover"')
-      ..writeln('MX: 3')
-      ..writeln('ST: $searchTarget\n');
-
-    final data = utf8.encode(buff.toString().replaceAll('\n', '\r\n'));
-
     for (var socket in _sockets) {
-      var multicastAddress = _getMulticastAddress(socket.address.type);
-      // Repeated 3 times beacuse UDP messages might be lost
-      for (var i = 0; i < 3; i++) {
-        runZonedGuarded(
-            () => socket.send(data, multicastAddress, 1900), _errors.addError);
+      final targets = _getMulticastTargets(socket.address.type);
+
+      for (var target in targets) {
+        // UDA 1.1 §1.3.2 - Search request with M-SEARCH
+        final buff = StringBuffer()
+          ..writeln('M-SEARCH * HTTP/1.1')
+          ..writeln('HOST: ${target.host}')
+          ..writeln('MAN: "ssdp:discover"')
+          ..writeln('MX: 3')
+          ..writeln('ST: $searchTarget')
+          ..writeln(
+              'USER-AGENT: ${Platform.operatingSystem}/${Platform.operatingSystemVersion} UPnP/1.1 Dart/${Platform.version}\n');
+
+        final data = utf8.encode(buff.toString().replaceAll('\n', '\r\n'));
+
+        // Repeated 3 times because UDP messages might be lost
+        for (var i = 0; i < 3; i++) {
+          runZonedGuarded(
+              () => socket.send(data, target.address, 1900), _errors.addError);
+        }
       }
     }
   }
@@ -164,14 +195,33 @@ class DeviceDiscoverer {
     }
   }
 
-  InternetAddress _getMulticastAddress(InternetAddressType addressType) {
+  /// Returns the multicast targets for a given address type.
+  ///
+  /// Per UPnP Device Architecture 2.0 (section A.4.5):
+  /// - IPv4: single target 239.255.255.250:1900
+  /// - IPv6: Link-Local scope FF02::C (mandatory) and
+  ///   Site-Local scope FF05::C (for discovery across subnets)
+  List<_MulticastTarget> _getMulticastTargets(InternetAddressType addressType) {
     switch (addressType) {
       case InternetAddressType.IPv4:
-        return InternetAddress('239.255.255.250');
+        return [
+          _MulticastTarget(
+              InternetAddress('239.255.255.250'), '239.255.255.250:1900'),
+        ];
       case InternetAddressType.IPv6:
-        return InternetAddress('FF05::C');
+        return [
+          _MulticastTarget(InternetAddress('FF02::C'), '[FF02::C]:1900'),
+          _MulticastTarget(InternetAddress('FF05::C'), '[FF05::C]:1900'),
+        ];
       default:
         throw ArgumentError("Internet Address Type not valid");
     }
   }
+}
+
+class _MulticastTarget {
+  final InternetAddress address;
+  final String host;
+
+  const _MulticastTarget(this.address, this.host);
 }

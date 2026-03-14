@@ -66,11 +66,12 @@ class Device {
 
   @override
   bool operator ==(Object other) {
-    return other.runtimeType == runtimeType &&
-        other is Device &&
-        other.description?.uuid != null &&
-        description?.uuid != null &&
-        description!.uuid == other.description!.uuid;
+    if (identical(this, other)) return true;
+    if (other is! Device) return false;
+    final thisUuid = description?.uuid;
+    final otherUuid = other.description?.uuid;
+    if (thisUuid != null && otherUuid != null) return thisUuid == otherUuid;
+    return false;
   }
 
   @override
@@ -120,7 +121,10 @@ class DeviceDescription {
 
   List<Icon> icons = [];
 
-  String? get uuid => udn?.substring('uuid:'.length);
+  /// UDA 1.1 §1.1.4 — UDN MUST begin with "uuid:", but some UDA 1.0 devices
+  /// may not comply. Falls back to the raw UDN as the identifier.
+  String? get uuid =>
+      udn?.startsWith('uuid:') == true ? udn?.substring(5) : udn;
 
   DeviceDescription.fromXml(this._xml) {
     deviceType = _xml.getElement('deviceType')?.innerText;
@@ -167,9 +171,9 @@ class Icon {
 
   Icon.fromXml(this._xml) {
     mimetype = _xml.getElement('mimetype')?.innerText;
-    width = int.parse(_xml.getElement('width')?.innerText ?? '');
-    height = int.parse(_xml.getElement('height')?.innerText ?? '');
-    depth = int.parse(_xml.getElement('depth')?.innerText ?? '');
+    width = int.tryParse(_xml.getElement('width')?.innerText ?? '');
+    height = int.tryParse(_xml.getElement('height')?.innerText ?? '');
+    depth = int.tryParse(_xml.getElement('depth')?.innerText ?? '');
     url = _xml.getElement('url')?.innerText;
   }
 

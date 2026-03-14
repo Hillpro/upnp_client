@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.2
+
+- **INFO**: Stable release
+- **INFO**: Added documentation for UPnP Device Architecture (UDA 1.0 and UDA 1.1)  
+- **FEAT**: New method to dispose the discoverer
+- **FEAT**: New UPnPException to parse the error SOAP
+- **FEAT**: Configurable multicastHops in the discoverer (UDA 1.1 §1.3.2:)
+- **FIX**: Discovering devices on IPv6 networks
+- **FIX**: HttpClient(s) never closed
+- **FIX**: Removed HTTP version and ServiceType version restrictions
+- **FIX**: Adjusted UPnP 1.0 device handling (UDA 1.1 §1.1.4)
+- **FIX**: Missing USER-AGENT header (UDA 1.1)
+- **FIX**: No timeout on requests (UDA 1.1 §3.2.2)
+
 ## 1.0.1
 
 - **FEAT**: Improving error handling
