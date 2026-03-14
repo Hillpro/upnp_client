@@ -124,8 +124,7 @@ class DeviceDiscoverer {
       }
 
       final request = await httpClient.getUrl(locationUri);
-      final response =
-          await request.close().timeout(_descriptionTimeout);
+      final response = await request.close().timeout(_descriptionTimeout);
       final deviceXml =
           XmlDocument.parse(await response.transform(utf8.decoder).join())
               .rootElement
@@ -151,7 +150,8 @@ class DeviceDiscoverer {
           ..writeln('MAN: "ssdp:discover"')
           ..writeln('MX: 3')
           ..writeln('ST: $searchTarget')
-          ..writeln('USER-AGENT: ${Platform.operatingSystem}/${Platform.operatingSystemVersion} UPnP/1.1 Dart/${Platform.version}\n');
+          ..writeln(
+              'USER-AGENT: ${Platform.operatingSystem}/${Platform.operatingSystemVersion} UPnP/1.1 Dart/${Platform.version}\n');
 
         final data = utf8.encode(buff.toString().replaceAll('\n', '\r\n'));
 
@@ -205,7 +205,8 @@ class DeviceDiscoverer {
     switch (addressType) {
       case InternetAddressType.IPv4:
         return [
-          _MulticastTarget(InternetAddress('239.255.255.250'), '239.255.255.250:1900'),
+          _MulticastTarget(
+              InternetAddress('239.255.255.250'), '239.255.255.250:1900'),
         ];
       case InternetAddressType.IPv6:
         return [
