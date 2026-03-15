@@ -125,12 +125,15 @@ class DeviceDiscoverer {
 
       final request = await httpClient.getUrl(locationUri);
       final response = await request.close().timeout(_descriptionTimeout);
-      final deviceXml =
+      final rootElement =
           XmlDocument.parse(await response.transform(utf8.decoder).join())
-              .rootElement
-              .getElement('device');
+              .rootElement;
+      final urlBase = rootElement.getElement('URLBase')?.innerText;
+      final deviceXml = rootElement.getElement('device');
 
-      if (deviceXml != null) _devices.add(Device.fromXml(deviceXml, location));
+      if (deviceXml != null) {
+        _devices.add(Device.fromXml(deviceXml, location, urlBase));
+      }
     } on Exception catch (e, st) {
       _errors.addError(e, st);
     } finally {
