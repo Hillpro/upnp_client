@@ -14,7 +14,11 @@ class Device {
   /// The location of the device
   String? url;
 
-  /// The base url of this device
+  /// The base URL for resolving relative URLs in this device's description.
+  ///
+  /// UDA 1.1 §2.3 - Deprecated `<URLBase>`,
+  /// UDA 1.0 devices may still provide it. Per spec, control points MUST
+  /// resolve relative URLs using URLBase if present, else the LOCATION URL.
   String? urlBase;
 
   /// The device description information
@@ -26,18 +30,23 @@ class Device {
   /// The list of embedded devices
   List<Device> devices = [];
 
-  Device.fromXml(this.xml, [this.url]) {
+  Device.fromXml(this.xml, [this.url, this.urlBase]) {
     if (xml.name.toString() != 'device') {
       throw Exception('ERROR: Invalid Device XML!\n$xml');
     }
 
-    urlBase = xml.getElement('URLBase')?.innerText ?? url;
+    urlBase ??= url;
 
     description = DeviceDescription.fromXml(xml);
 
-    services =
-        xml.loadList('serviceList', (xml) => Service.fromXmlTyped(this, xml));
-    devices = xml.loadList('deviceList', Device.fromXml);
+    services = xml.loadList(
+      'serviceList',
+      (xml) => Service.fromXmlTyped(this, xml),
+    );
+    devices = xml.loadList(
+      'deviceList',
+      (xml) => Device.fromXml(xml, null, urlBase),
+    );
   }
 
   RenderingControlService? renderingControlService() =>
@@ -75,7 +84,7 @@ class Device {
   }
 
   @override
-  int get hashCode => description?.uuid.hashCode ?? xml.toString().hashCode;
+  int get hashCode => description?.uuid.hashCode ?? url.hashCode;
 }
 
 /// The general information about this UPnP device

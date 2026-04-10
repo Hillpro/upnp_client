@@ -18,7 +18,7 @@ class DeviceDiscoverer {
   final _errors = StreamController<void>.broadcast();
   static const _supportedAddressTypes = [
     InternetAddressType.IPv4,
-    InternetAddressType.IPv6
+    InternetAddressType.IPv6,
   ];
 
   ///
@@ -40,14 +40,18 @@ class DeviceDiscoverer {
   /// By default, a socket will be created for every supported types.
   /// Currently, IP version 4 (IPv4), IP version 6 (IPv6) are supported.
   ///
-  Future<void> start(
-      {int port = 0,
-      int multicastHops = 2,
-      List<InternetAddressType> addressTypes = _supportedAddressTypes}) async {
+  Future<void> start({
+    int port = 0,
+    int multicastHops = 2,
+    List<InternetAddressType> addressTypes = _supportedAddressTypes,
+  }) async {
     for (var addressType in addressTypes) {
       if (_supportedAddressTypes.contains(addressType)) {
         await _createSocket(
-            _getBroadcastAddress(addressType), port, multicastHops);
+          _getBroadcastAddress(addressType),
+          port,
+          multicastHops,
+        );
       }
     }
   }
@@ -76,8 +80,11 @@ class DeviceDiscoverer {
     _errors.close();
   }
 
-  Future<void> _createSocket(InternetAddress address,
-      [int port = 0, int multicastHops = 2]) async {
+  Future<void> _createSocket(
+    InternetAddress address, [
+    int port = 0,
+    int multicastHops = 2,
+  ]) async {
     final socket = await RawDatagramSocket.bind(address, port);
 
     // UDA 1.1 §1.3.2: TTL SHOULD default to 2 and SHOULD be configurable.
@@ -107,30 +114,39 @@ class DeviceDiscoverer {
   }
 
   Future<void> _addDevice(List<String> headers) async {
-    var location = headers.firstWhere(
-        (element) => element.toUpperCase().contains('LOCATION'),
-        orElse: () => '');
+    final locationHeader = headers.firstWhere(
+      (element) => element.toUpperCase().startsWith('LOCATION'),
+      orElse: () => '',
+    );
 
-    if (location == '') return;
+    if (locationHeader.isEmpty) return;
 
-    location = location.substring(location.indexOf('http'));
+    final separatorIndex = locationHeader.indexOf(':');
+    if (separatorIndex == -1) return;
+    final location = locationHeader.substring(separatorIndex + 1).trim();
 
     final httpClient = HttpClient();
     httpClient.connectionTimeout = _descriptionTimeout;
     try {
       final locationUri = Uri.parse(location);
-      if (locationUri.host.isEmpty) {
+      // UDA 1.1 §1.3.3: LOCATION must be a single absolute URL.
+      // Accept http and https; drop anything else (e.g. malformed or unknown schemes).
+      if (!{'http', 'https'}.contains(locationUri.scheme) ||
+          locationUri.host.isEmpty) {
         return;
       }
 
       final request = await httpClient.getUrl(locationUri);
       final response = await request.close().timeout(_descriptionTimeout);
-      final deviceXml =
-          XmlDocument.parse(await response.transform(utf8.decoder).join())
-              .rootElement
-              .getElement('device');
+      final rootElement = XmlDocument.parse(
+        await response.transform(utf8.decoder).join(),
+      ).rootElement;
+      final urlBase = rootElement.getElement('URLBase')?.innerText;
+      final deviceXml = rootElement.getElement('device');
 
-      if (deviceXml != null) _devices.add(Device.fromXml(deviceXml, location));
+      if (deviceXml != null) {
+        _devices.add(Device.fromXml(deviceXml, location, urlBase));
+      }
     } on Exception catch (e, st) {
       _errors.addError(e, st);
     } finally {
@@ -151,14 +167,17 @@ class DeviceDiscoverer {
           ..writeln('MX: 3')
           ..writeln('ST: $searchTarget')
           ..writeln(
-              'USER-AGENT: ${Platform.operatingSystem}/${Platform.operatingSystemVersion} UPnP/1.1 Dart/${Platform.version}\n');
+            'USER-AGENT: ${Platform.operatingSystem}/${Platform.operatingSystemVersion} UPnP/1.1 Dart/${Platform.version}\n',
+          );
 
         final data = utf8.encode(buff.toString().replaceAll('\n', '\r\n'));
 
         // Repeated 3 times because UDP messages might be lost
         for (var i = 0; i < 3; i++) {
           runZonedGuarded(
-              () => socket.send(data, target.address, 1900), _errors.addError);
+            () => socket.send(data, target.address, 1900),
+            _errors.addError,
+          );
         }
       }
     }
@@ -168,9 +187,10 @@ class DeviceDiscoverer {
   /// Search for UPnP devices matching [searchTarget]
   /// for a given [timeout] time, then returns the list
   ///
-  Future<List<Device>> getDevices(
-      {Duration timeout = const Duration(seconds: 5),
-      String? searchTarget}) async {
+  Future<List<Device>> getDevices({
+    Duration timeout = const Duration(seconds: 5),
+    String? searchTarget,
+  }) async {
     final List<Device> devices = [];
 
     var sub = _devices.stream.listen((d) {
@@ -206,7 +226,9 @@ class DeviceDiscoverer {
       case InternetAddressType.IPv4:
         return [
           _MulticastTarget(
-              InternetAddress('239.255.255.250'), '239.255.255.250:1900'),
+            InternetAddress('239.255.255.250'),
+            '239.255.255.250:1900',
+          ),
         ];
       case InternetAddressType.IPv6:
         return [

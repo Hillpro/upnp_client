@@ -28,31 +28,42 @@ class MusicTrack {
 
   String toXml() {
     XmlBuilder builder = XmlBuilder();
-    builder.element('DIDL-Lite', namespace: _didlLiteNamespace, namespaces: {
-      _didlLiteNamespace: null,
-      _dcNamespace: 'dc',
-      _upnpNamespace: 'upnp',
-      _secNamespace: 'sec',
-    }, nest: () {
-      builder.element('item', attributes: {
-        'id': id,
-        'parentID': '',
-        'restricted': '1',
-      }, nest: () {
-        builder.element('class',
-            namespace: _upnpNamespace,
-            nest: 'object.item.audioItem.musicTrack');
-        builder.element('title', namespace: _dcNamespace, nest: title);
-        builder.element('artist', namespace: _upnpNamespace, nest: artist);
-        builder.element('album', namespace: _upnpNamespace, nest: album);
-        builder.element('albumArtURI', namespace: _upnpNamespace, nest: artUri);
-        builder.element('res',
-            attributes: {
-              'duration': durationToHHMMSS(duration),
-            },
-            nest: uri);
-      });
-    });
+    builder.element(
+      'DIDL-Lite',
+      namespace: _didlLiteNamespace,
+      namespaces: {
+        _didlLiteNamespace: null,
+        _dcNamespace: 'dc',
+        _upnpNamespace: 'upnp',
+        _secNamespace: 'sec',
+      },
+      nest: () {
+        builder.element(
+          'item',
+          attributes: {'id': id, 'parentID': '', 'restricted': '1'},
+          nest: () {
+            builder.element(
+              'class',
+              namespace: _upnpNamespace,
+              nest: 'object.item.audioItem.musicTrack',
+            );
+            builder.element('title', namespace: _dcNamespace, nest: title);
+            builder.element('artist', namespace: _upnpNamespace, nest: artist);
+            builder.element('album', namespace: _upnpNamespace, nest: album);
+            builder.element(
+              'albumArtURI',
+              namespace: _upnpNamespace,
+              nest: artUri,
+            );
+            builder.element(
+              'res',
+              attributes: {'duration': durationToHHMMSS(duration)},
+              nest: uri,
+            );
+          },
+        );
+      },
+    );
     return builder.buildDocument().toXmlString();
   }
 

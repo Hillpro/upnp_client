@@ -6,21 +6,27 @@ import 'package:collection/collection.dart';
 class AvTransportService extends Service {
   AvTransportService.fromXml(super.device, super.xml) : super.fromXml();
 
-  Future<void> setAVTransportURI(String uri,
-      {String metadata = '', int instanceId = 0}) async {
+  Future<void> setAVTransportURI(
+    String uri, {
+    String metadata = '',
+    int instanceId = 0,
+  }) async {
     await invokeAction('SetAVTransportURI', {
       'CurrentURI': uri,
       'CurrentURIMetaData': metadata,
-      'InstanceID': instanceId
+      'InstanceID': instanceId,
     });
   }
 
-  Future<void> setNextAVTransportURI(String uri,
-      {String metadata = '', int instanceId = 0}) async {
+  Future<void> setNextAVTransportURI(
+    String uri, {
+    String metadata = '',
+    int instanceId = 0,
+  }) async {
     await invokeAction('SetNextAVTransportURI', {
       'NextURI': uri,
       'NextURIMetaData': metadata,
-      'InstanceID': instanceId
+      'InstanceID': instanceId,
     });
   }
 
@@ -40,8 +46,9 @@ class AvTransportService extends Service {
   }
 
   Future<TransportInfo> getTransportInfo({int instanceId = 0}) async {
-    final args =
-        await invokeAction('GetTransportInfo', {'InstanceID': instanceId});
+    final args = await invokeAction('GetTransportInfo', {
+      'InstanceID': instanceId,
+    });
     return TransportInfo(
       currentTransportState: args['CurrentTransportState'],
       currentTransportStatus: args['CurrentTransportStatus'],
@@ -50,8 +57,9 @@ class AvTransportService extends Service {
   }
 
   Future<PositionInfo> getPositionInfo({int instanceId = 0}) async {
-    final args =
-        await invokeAction('GetPositionInfo', {'InstanceID': instanceId});
+    final args = await invokeAction('GetPositionInfo', {
+      'InstanceID': instanceId,
+    });
     return PositionInfo(
       track: args['Track'],
       trackDuration: args['TrackDuration'],
@@ -65,8 +73,9 @@ class AvTransportService extends Service {
   }
 
   Future<DeviceCapabilities> getDeviceCapabilities({int instanceId = 0}) async {
-    final args =
-        await invokeAction('GetDeviceCapabilities', {'InstanceID': instanceId});
+    final args = await invokeAction('GetDeviceCapabilities', {
+      'InstanceID': instanceId,
+    });
     return DeviceCapabilities(
       playMedia: args['PlayMedia'],
       recMedia: args['RecMedia'],
@@ -75,8 +84,9 @@ class AvTransportService extends Service {
   }
 
   Future<TransportSettings> getTransportSettings({int instanceId = 0}) async {
-    final args =
-        await invokeAction('GetTransportSettings', {'InstanceID': instanceId});
+    final args = await invokeAction('GetTransportSettings', {
+      'InstanceID': instanceId,
+    });
     return TransportSettings(
       playMode: args['PlayMode'],
       recQualityMode: args['RecQualityMode'],
@@ -116,13 +126,16 @@ class AvTransportService extends Service {
   }
 
   Future<void> setPlayMode(PlayMode playMode, {int instanceId = 0}) async {
-    await invokeAction('SetPlayMode',
-        {'InstanceID': instanceId, 'NewPlayMode': playMode.value});
+    await invokeAction('SetPlayMode', {
+      'InstanceID': instanceId,
+      'NewPlayMode': playMode.value,
+    });
   }
 
   Future<List<String>> getCurrentTransportActions({int instanceId = 0}) async {
-    final args = await invokeAction(
-        'GetCurrentTransportActions', {'InstanceID': instanceId});
+    final args = await invokeAction('GetCurrentTransportActions', {
+      'InstanceID': instanceId,
+    });
     return args['Actions']?.split(',') ?? [];
   }
 
@@ -193,10 +206,12 @@ class TransportInfo {
     required String? currentTransportState,
     required String? currentTransportStatus,
     required this.currentSpeed,
-  })  : currentTransportState = TransportState.values
-            .firstWhereOrNull((state) => state.value == currentTransportState),
-        currentTransportStatus = TransportStatus.values.firstWhereOrNull(
-            (status) => status.value == currentTransportStatus);
+  }) : currentTransportState = TransportState.values.firstWhereOrNull(
+         (state) => state.value == currentTransportState,
+       ),
+       currentTransportStatus = TransportStatus.values.firstWhereOrNull(
+         (status) => status.value == currentTransportStatus,
+       );
 
   @override
   String toString() {
@@ -223,9 +238,9 @@ class PositionInfo {
     required this.absTime,
     required String? relCount,
     required String? absCount,
-  })  : track = int.tryParse(track ?? ''),
-        relCount = int.tryParse(relCount ?? ''),
-        absCount = int.tryParse(absCount ?? '');
+  }) : track = int.tryParse(track ?? ''),
+       relCount = int.tryParse(relCount ?? ''),
+       absCount = int.tryParse(absCount ?? '');
 
   @override
   String toString() {
@@ -254,11 +269,10 @@ class TransportSettings {
   final PlayMode? playMode;
   final String? recQualityMode;
 
-  TransportSettings({
-    required String? playMode,
-    required this.recQualityMode,
-  }) : playMode =
-            PlayMode.values.firstWhereOrNull((mode) => mode.value == playMode);
+  TransportSettings({required String? playMode, required this.recQualityMode})
+    : playMode = PlayMode.values.firstWhereOrNull(
+        (mode) => mode.value == playMode,
+      );
 
   @override
   String toString() {

@@ -54,9 +54,11 @@ class Service {
         RenderingControlService.fromXml(device, xml),
       'urn:schemas-upnp-org:service:ConnectionManager:' =>
         ConnectionManagerService.fromXml(device, xml),
-      'urn:schemas-upnp-org:service:AVTransport:' =>
-        AvTransportService.fromXml(device, xml),
-      _ => Service.fromXml(device, xml)
+      'urn:schemas-upnp-org:service:AVTransport:' => AvTransportService.fromXml(
+        device,
+        xml,
+      ),
+      _ => Service.fromXml(device, xml),
     };
   }
 
@@ -73,21 +75,22 @@ class Service {
   }
 
   Future<ServiceDescription> getDescription() async {
-    if (device.url == null || url == null) {
+    if (device.urlBase == null || url == null) {
       throw Exception('ERROR: Invalid Device or Service URL!');
     }
 
-    final Uri deviceUri = Uri.parse(device.url!);
     final httpClient = HttpClient();
     httpClient.connectionTimeout = _actionTimeout;
     try {
-      final HttpClientRequest request =
-          await httpClient.getUrl(deviceUri.resolve(url!));
-      final HttpClientResponse response =
-          await request.close().timeout(_actionTimeout);
-      final XmlElement serviceDescXml =
-          XmlDocument.parse(await response.transform(utf8.decoder).join())
-              .rootElement;
+      final HttpClientRequest request = await httpClient.getUrl(
+        _resolveUrl(url!),
+      );
+      final HttpClientResponse response = await request.close().timeout(
+        _actionTimeout,
+      );
+      final XmlElement serviceDescXml = XmlDocument.parse(
+        await response.transform(utf8.decoder).join(),
+      ).rootElement;
       return ServiceDescription.fromXml(this, serviceDescXml);
     } finally {
       httpClient.close();
@@ -95,40 +98,49 @@ class Service {
   }
 
   Future<XmlElement> sendToControlUrl(String name, XmlElement body) async {
-    if (device.url == null || controlUrl == null) {
+    if (device.urlBase == null || controlUrl == null) {
       throw Exception('ERROR: Invalid Device or Service Control URL');
     }
 
     final XmlBuilder builder = XmlBuilder();
-    builder.element('Envelope',
-        namespace: _soapEnvelopeNs,
-        namespaces: {_soapEnvelopeNs: 's'},
-        attributes: {'s:encodingStyle': _soapEncodingNs}, nest: () {
-      builder.element('Body', namespace: _soapEnvelopeNs, nest: body);
-    });
+    builder.element(
+      'Envelope',
+      namespace: _soapEnvelopeNs,
+      namespaces: {_soapEnvelopeNs: 's'},
+      attributes: {'s:encodingStyle': _soapEncodingNs},
+      nest: () {
+        builder.element('Body', namespace: _soapEnvelopeNs, nest: body);
+      },
+    );
     final String xmlReq = builder.buildDocument().toXmlString();
 
     final httpClient = HttpClient();
     httpClient.connectionTimeout = _actionTimeout;
     try {
-      final HttpClientRequest request =
-          await httpClient.postUrl(Uri.parse(device.url!).resolve(controlUrl!));
+      final HttpClientRequest request = await httpClient.postUrl(
+        _resolveUrl(controlUrl!),
+      );
       request.headers.set('SOAPACTION', '"$type#$name"');
       request.headers.set('Content-Type', 'text/xml; charset="utf-8"');
       request.headers.set('Content-Length', utf8.encode(xmlReq).length);
       request.write(xmlReq);
-      final HttpClientResponse response =
-          await request.close().timeout(_actionTimeout);
+      final HttpClientResponse response = await request.close().timeout(
+        _actionTimeout,
+      );
 
-      final String respBody =
-          await response.cast<List<int>>().transform(utf8.decoder).join();
+      final String respBody = await response
+          .cast<List<int>>()
+          .transform(utf8.decoder)
+          .join();
       final XmlDocument xmlResp = XmlDocument.parse(respBody);
       if (xmlResp.rootElement.name.local != 'Envelope') {
         throw Exception('ERROR: Invalid SOAP response!\n$respBody');
       }
 
-      final XmlElement? xmlRespBody =
-          xmlResp.rootElement.getElement('Body', namespace: _soapEnvelopeNs);
+      final XmlElement? xmlRespBody = xmlResp.rootElement.getElement(
+        'Body',
+        namespace: _soapEnvelopeNs,
+      );
 
       if (xmlRespBody == null) {
         throw Exception('ERROR: Invalid SOAP response!\n$respBody');
@@ -145,25 +157,43 @@ class Service {
     }
   }
 
+  /// Resolves a relative service [path] against the device's URL base.
+  ///
+  /// Per UDA 1.1 §2.3, urlBase is either the absolute URLBase from the device
+  /// description (UDA 1.0) or the LOCATION URL (UDA 1.1).
+  Uri _resolveUrl(String path) => Uri.parse(device.urlBase!).resolve(path);
+
   Future<Map<String, String>> invokeAction(
-      String name, Map<String, dynamic> args) async {
+    String name,
+    Map<String, dynamic> args,
+  ) async {
     if (type == null) throw Exception('ERROR: Invalid Service Type');
 
     final XmlBuilder builder = XmlBuilder();
-    builder.element(name, namespace: type!, namespaces: {type!: 'u'}, nest: () {
-      for (final it in args.entries) {
-        builder.element(it.key, nest: it.value);
-      }
-    });
+    builder.element(
+      name,
+      namespace: type!,
+      namespaces: {type!: 'u'},
+      nest: () {
+        for (final it in args.entries) {
+          builder.element(it.key, nest: it.value);
+        }
+      },
+    );
 
-    final XmlElement respXml =
-        await sendToControlUrl(name, builder.buildDocument().rootElement);
+    final XmlElement respXml = await sendToControlUrl(
+      name,
+      builder.buildDocument().rootElement,
+    );
 
-    final XmlElement? respEl =
-        respXml.getElement('${name}Response', namespace: type!);
+    final XmlElement? respEl = respXml.getElement(
+      '${name}Response',
+      namespace: type!,
+    );
 
-    final List<XmlElement> respArgs =
-        (respEl?.children ?? []).whereType<XmlElement>().toList();
+    final List<XmlElement> respArgs = (respEl?.children ?? [])
+        .whereType<XmlElement>()
+        .toList();
     final Map<String, String> map = <String, String>{};
     for (final arg in respArgs) {
       map[arg.name.local] = arg.innerText;
@@ -240,7 +270,8 @@ class StateVariable {
     name = xml.getElement('name')?.innerText;
     sendEventsAttribute = xml.getAttribute('sendEvents') == 'yes';
     dataType = DataType.values.firstWhereOrNull(
-        (dt) => dt.value == xml.getElement('dataType')?.innerText);
+      (dt) => dt.value == xml.getElement('dataType')?.innerText,
+    );
     allowedValues = xml.loadList('allowedValueList', (xml) => xml.innerText);
   }
 
