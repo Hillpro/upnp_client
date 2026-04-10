@@ -80,11 +80,16 @@ class Device {
     final thisUuid = description?.uuid;
     final otherUuid = other.description?.uuid;
     if (thisUuid != null && otherUuid != null) return thisUuid == otherUuid;
-    return false;
+
+    // UDN is required by spec but some real-world devices omit it.
+    // Fall back to LOCATION URL — sufficient within a single subnet;
+    // private IP collisions across subnets are not distinguishable without
+    // per-interface socket metadata that Dart does not expose.
+    return url != null && url == other.url;
   }
 
   @override
-  int get hashCode => description?.uuid.hashCode ?? url.hashCode;
+  int get hashCode => description?.uuid?.hashCode ?? url.hashCode;
 }
 
 /// The general information about this UPnP device
