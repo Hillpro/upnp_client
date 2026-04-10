@@ -2,6 +2,7 @@ import 'package:xml/xml.dart';
 import 'dart:convert';
 import 'package:upnp_client/src/device.dart';
 import 'dart:io';
+import 'package:upnp_client/src/diagnostics.dart';
 import 'package:upnp_client/src/xml_utils.dart';
 import 'package:upnp_client/src/action.dart';
 import 'package:upnp_client/src/data_type.dart';
@@ -210,9 +211,9 @@ class Service {
   }
 
   @override
-  String toString() {
-    return 'Service{type: $type, id: $id}';
-  }
+  String toString() => buildDescription(runtimeType, describeFields());
+
+  Map<String, dynamic> describeFields() => {'type': type, 'id': id};
 }
 
 /// An UPnP Service Description
@@ -239,18 +240,15 @@ class ServiceDescription {
   }
 
   @override
-  String toString() {
-    StringBuffer sb = StringBuffer('ServiceDescription{actions: [');
-    for (var action in actions) {
-      sb.write('\n\t${action.toString().replaceAll('\n', '\n\t')}');
-    }
-    sb.write('\n], stateVariables: [');
-    for (var stateVariable in stateVariables) {
-      sb.write('\n\t${stateVariable.toString().replaceAll('\n', '\n\t')}');
-    }
-    sb.write('\n]}');
-    return sb.toString();
-  }
+  String toString() =>
+      buildDescription(runtimeType, describeFields(), describeChildren());
+
+  Map<String, dynamic> describeFields() => {};
+
+  Map<String, List> describeChildren() => {
+    'actions': actions,
+    'stateVariables': stateVariables,
+  };
 }
 
 /// An UPnP State Variable
@@ -285,6 +283,13 @@ class StateVariable {
 
   @override
   String toString() {
-    return 'StateVariable{name: $name, sendEventsAttribute: $sendEventsAttribute, dataType: $dataType, allowedValues: $allowedValues}';
+    return buildDescription(runtimeType, describeFields());
   }
+
+  Map<String, dynamic> describeFields() => {
+    'name': name,
+    'sendEventsAttribute': sendEventsAttribute,
+    'dataType': dataType,
+    'allowedValues': allowedValues,
+  };
 }

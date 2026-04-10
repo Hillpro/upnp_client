@@ -1,3 +1,4 @@
+import 'package:upnp_client/src/diagnostics.dart';
 import 'package:xml/xml.dart';
 import 'package:upnp_client/src/didl/utils.dart';
 
@@ -69,6 +70,14 @@ class MusicTrack {
 
   @override
   String toString() {
-    return 'MusicTrack{id: $id, title: $title, artist: $artist, album: $album, duration: $duration}';
+    return buildDescription(runtimeType, describeFields());
   }
+
+  Map<String, dynamic> describeFields() => {
+    'id': id,
+    'title': title,
+    'artist': artist,
+    'album': album,
+    'duration': duration,
+  };
 }

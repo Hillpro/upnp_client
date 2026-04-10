@@ -1,3 +1,4 @@
+import 'package:upnp_client/src/diagnostics.dart';
 import 'package:upnp_client/src/service.dart';
 import 'package:upnp_client/src/xml_utils.dart';
 import 'package:xml/xml.dart';
@@ -59,19 +60,18 @@ class Device {
       services.whereType<AvTransportService>().singleOrNull;
 
   @override
-  String toString() {
-    StringBuffer sb = StringBuffer()
-      ..write('Device{url: $url, description: $description, services: [');
-    for (var service in services) {
-      sb.write('\n\t${service.toString().replaceAll('\n', '\n\t')}');
-    }
-    sb.write('\n], devices: [');
-    for (var device in devices) {
-      sb.writeln('\n\t${device.toString().replaceAll('\n', '\n\t')}');
-    }
-    sb.write('\n]}');
-    return sb.toString();
-  }
+  String toString() =>
+      buildDescription(runtimeType, describeFields(), describeChildren());
+
+  Map<String, dynamic> describeFields() => {
+    'url': url,
+    'description': description,
+  };
+
+  Map<String, List> describeChildren() => {
+    'services': services,
+    'devices': devices,
+  };
 
   @override
   bool operator ==(Object other) {
@@ -159,8 +159,20 @@ class DeviceDescription {
 
   @override
   String toString() {
-    return 'DeviceDescription{deviceType: $deviceType, friendlyName: $friendlyName, manufacturer: $manufacturer, modelName: $modelName, modelNumber: $modelNumber, modelDescription: $modelDescription, serialNumber: $serialNumber, udn: $udn, upc: $upc}';
+    return buildDescription(runtimeType, describeFields());
   }
+
+  Map<String, dynamic> describeFields() => {
+    'deviceType': deviceType,
+    'friendlyName': friendlyName,
+    'manufacturer': manufacturer,
+    'modelName': modelName,
+    'modelNumber': modelNumber,
+    'modelDescription': modelDescription,
+    'serialNumber': serialNumber,
+    'udn': udn,
+    'upc': upc,
+  };
 }
 
 /// An UPnP device icon
@@ -193,6 +205,14 @@ class Icon {
 
   @override
   String toString() {
-    return 'Icon{mimetype: $mimetype, width: $width, height: $height, depth: $depth, url: $url}';
+    return buildDescription(runtimeType, describeFields());
   }
+
+  Map<String, dynamic> describeFields() => {
+    'mimetype': mimetype,
+    'width': width,
+    'height': height,
+    'depth': depth,
+    'url': url,
+  };
 }

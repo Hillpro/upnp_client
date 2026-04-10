@@ -1,3 +1,4 @@
+import 'package:upnp_client/src/diagnostics.dart';
 import 'package:upnp_client/src/service.dart';
 
 /// An UPnP ConnectionManager service
@@ -18,11 +19,6 @@ class ConnectionManagerService extends Service {
           .toList(),
     );
   }
-
-  @override
-  String toString() {
-    return 'ConnectionManagerService{}';
-  }
 }
 
 class ProtocolInfoData {
@@ -32,7 +28,9 @@ class ProtocolInfoData {
   const ProtocolInfoData({required this.sink, required this.source});
 
   @override
-  String toString() => 'ProtocolInfoData{sink: $sink, source: $source}';
+  String toString() => buildDescription(runtimeType, describeFields());
+
+  Map<String, dynamic> describeFields() => {'sink': sink, 'source': source};
 }
 
 class ProtocolInfo {

@@ -1,3 +1,4 @@
+import 'package:upnp_client/src/diagnostics.dart';
 import 'package:upnp_client/src/service.dart';
 import 'package:collection/collection.dart';
 
@@ -138,11 +139,6 @@ class AvTransportService extends Service {
     });
     return args['Actions']?.split(',') ?? [];
   }
-
-  @override
-  String toString() {
-    return 'AvTransportService{}';
-  }
 }
 
 class MediaInfo {
@@ -170,8 +166,20 @@ class MediaInfo {
 
   @override
   String toString() {
-    return 'MediaInfo{nrTracks: $nrTracks, mediaDuration: $mediaDuration, currentURI: $currentURI, currentURIMetaData: $currentURIMetaData, nextURI: $nextURI, nextURIMetaData: $nextURIMetaData, playMedium: $playMedium, recordMedium: $recordMedium, writeStatus: $writeStatus}';
+    return buildDescription(runtimeType, describeFields());
   }
+
+  Map<String, dynamic> describeFields() => {
+    'nrTracks': nrTracks,
+    'mediaDuration': mediaDuration,
+    'currentURI': currentURI,
+    'currentURIMetaData': currentURIMetaData,
+    'nextURI': nextURI,
+    'nextURIMetaData': nextURIMetaData,
+    'playMedium': playMedium,
+    'recordMedium': recordMedium,
+    'writeStatus': writeStatus,
+  };
 }
 
 enum TransportState {
@@ -215,8 +223,14 @@ class TransportInfo {
 
   @override
   String toString() {
-    return 'TransportInfo{currentTransportState: $currentTransportState, currentTransportStatus: $currentTransportStatus, currentSpeed: $currentSpeed}';
+    return buildDescription(runtimeType, describeFields());
   }
+
+  Map<String, dynamic> describeFields() => {
+    'currentTransportState': currentTransportState,
+    'currentTransportStatus': currentTransportStatus,
+    'currentSpeed': currentSpeed,
+  };
 }
 
 class PositionInfo {
@@ -244,8 +258,19 @@ class PositionInfo {
 
   @override
   String toString() {
-    return 'PositionInfo{track: $track, trackDuration: $trackDuration, trackMetaData: $trackMetaData, trackURI: $trackURI, relTime: $relTime, absTime: $absTime, relCount: $relCount, absCount: $absCount}';
+    return buildDescription(runtimeType, describeFields());
   }
+
+  Map<String, dynamic> describeFields() => {
+    'track': track,
+    'trackDuration': trackDuration,
+    'trackMetaData': trackMetaData,
+    'trackURI': trackURI,
+    'relTime': relTime,
+    'absTime': absTime,
+    'relCount': relCount,
+    'absCount': absCount,
+  };
 }
 
 class DeviceCapabilities {
@@ -261,8 +286,14 @@ class DeviceCapabilities {
 
   @override
   String toString() {
-    return 'DeviceCapabilities{playMedia: $playMedia, recMedia: $recMedia, recQualityModes: $recQualityModes}';
+    return buildDescription(runtimeType, describeFields());
   }
+
+  Map<String, dynamic> describeFields() => {
+    'playMedia': playMedia,
+    'recMedia': recMedia,
+    'recQualityModes': recQualityModes,
+  };
 }
 
 class TransportSettings {
@@ -276,8 +307,13 @@ class TransportSettings {
 
   @override
   String toString() {
-    return 'TransportSettings{playMode: $playMode, recQualityMode: $recQualityMode}';
+    return buildDescription(runtimeType, describeFields());
   }
+
+  Map<String, dynamic> describeFields() => {
+    'playMode': playMode,
+    'recQualityMode': recQualityMode,
+  };
 }
 
 enum PlayMode {
