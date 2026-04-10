@@ -107,19 +107,24 @@ class DeviceDiscoverer {
   }
 
   Future<void> _addDevice(List<String> headers) async {
-    var location = headers.firstWhere(
-        (element) => element.toUpperCase().contains('LOCATION'),
+    final locationHeader = headers.firstWhere(
+        (element) => element.toUpperCase().startsWith('LOCATION'),
         orElse: () => '');
 
-    if (location == '') return;
+    if (locationHeader.isEmpty) return;
 
-    location = location.substring(location.indexOf('http'));
+    final separatorIndex = locationHeader.indexOf(':');
+    if (separatorIndex == -1) return;
+    final location = locationHeader.substring(separatorIndex + 1).trim();
 
     final httpClient = HttpClient();
     httpClient.connectionTimeout = _descriptionTimeout;
     try {
       final locationUri = Uri.parse(location);
-      if (locationUri.host.isEmpty) {
+      // UDA 1.1 §1.3.3: LOCATION must be a single absolute URL.
+      // Accept http and https; drop anything else (e.g. malformed or unknown schemes).
+      if (!{'http', 'https'}.contains(locationUri.scheme) ||
+          locationUri.host.isEmpty) {
         return;
       }
 
