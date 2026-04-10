@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.3
+
+- **INFO**: Updated the SDK lower bound to 3.8
+- **FIX**: UPnP v1.0 boolean handling (UDA 1.1 §2.3.9)
+- **FIX**: URLBase retrieval in Discoverer (UDA 1.1 §2.3)
+- **FIX**: Service url resolution (UDA 1.1 §2.3)
+- **FIX**: RangeError on invalid LOCATION header (UDA 1.1 §1.3.3)
+
 ## 1.0.2
 
 - **INFO**: Stable release
