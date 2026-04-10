@@ -73,16 +73,15 @@ class Service {
   }
 
   Future<ServiceDescription> getDescription() async {
-    if (device.url == null || url == null) {
+    if (device.urlBase == null || url == null) {
       throw Exception('ERROR: Invalid Device or Service URL!');
     }
 
-    final Uri deviceUri = Uri.parse(device.url!);
     final httpClient = HttpClient();
     httpClient.connectionTimeout = _actionTimeout;
     try {
       final HttpClientRequest request =
-          await httpClient.getUrl(deviceUri.resolve(url!));
+          await httpClient.getUrl(_resolveUrl(url!));
       final HttpClientResponse response =
           await request.close().timeout(_actionTimeout);
       final XmlElement serviceDescXml =
@@ -95,7 +94,7 @@ class Service {
   }
 
   Future<XmlElement> sendToControlUrl(String name, XmlElement body) async {
-    if (device.url == null || controlUrl == null) {
+    if (device.urlBase == null || controlUrl == null) {
       throw Exception('ERROR: Invalid Device or Service Control URL');
     }
 
@@ -112,7 +111,7 @@ class Service {
     httpClient.connectionTimeout = _actionTimeout;
     try {
       final HttpClientRequest request =
-          await httpClient.postUrl(Uri.parse(device.url!).resolve(controlUrl!));
+          await httpClient.postUrl(_resolveUrl(controlUrl!));
       request.headers.set('SOAPACTION', '"$type#$name"');
       request.headers.set('Content-Type', 'text/xml; charset="utf-8"');
       request.headers.set('Content-Length', utf8.encode(xmlReq).length);
@@ -144,6 +143,12 @@ class Service {
       httpClient.close();
     }
   }
+  
+  /// Resolves a relative service [path] against the device's URL base.
+  ///
+  /// Per UDA 1.1 §2.3, urlBase is either the absolute URLBase from the device
+  /// description (UDA 1.0) or the LOCATION URL (UDA 1.1).
+  Uri _resolveUrl(String path) => Uri.parse(device.urlBase!).resolve(path);
 
   Future<Map<String, String>> invokeAction(
       String name, Map<String, dynamic> args) async {
