@@ -7,11 +7,9 @@ import 'package:xml/xml.dart';
 
 const _descriptionTimeout = Duration(seconds: 30);
 
-///
 /// [DeviceDiscoverer] uses Simple Service Discovery Protocol Based on UDP Multicast (SSDP) to issue searches and find UPnP devices and services.
 ///
 /// You can start the discoverer in either IPv4 or IPv6, or both.
-///
 class DeviceDiscoverer {
   final _sockets = <RawDatagramSocket>[];
   final _devices = StreamController<Device>.broadcast();
@@ -21,25 +19,19 @@ class DeviceDiscoverer {
     InternetAddressType.IPv6,
   ];
 
-  ///
   /// A stream of discovered UPnP devices.
-  ///
   Stream<Device> get devices => _devices.stream;
 
-  ///
   /// A stream of errors occurred during the discovery process.
   /// These errors are not fatal and will not stop the discovery process.
-  ///
   Stream<void> get errors => _errors.stream;
 
-  ///
   /// Starts the Discoverer.
   ///
   /// Starts a socket to listen to UPnP devices responses on a given [port]
   /// Listen for all given [InternetAddressType]
   /// By default, a socket will be created for every supported types.
   /// Currently, IP version 4 (IPv4), IP version 6 (IPv6) are supported.
-  ///
   Future<void> start({
     int port = 0,
     int multicastHops = 2,
@@ -56,11 +48,9 @@ class DeviceDiscoverer {
     }
   }
 
-  ///
   /// Stops the Discoverer.
   ///
-  /// Closes all udp sockets
-  ///
+  /// Closes all udp sockets.
   void stop() {
     for (var socket in _sockets) {
       socket.close();
@@ -68,12 +58,10 @@ class DeviceDiscoverer {
     _sockets.clear();
   }
 
-  ///
   /// Disposes the Discoverer.
   ///
   /// Stops discovery and closes all streams. After calling this,
   /// the discoverer cannot be reused.
-  ///
   void dispose() {
     stop();
     _devices.close();
@@ -183,10 +171,8 @@ class DeviceDiscoverer {
     }
   }
 
-  ///
   /// Search for UPnP devices matching [searchTarget]
-  /// for a given [timeout] time, then returns the list
-  ///
+  /// for a given [timeout] time, then returns the list.
   Future<List<Device>> getDevices({
     Duration timeout = const Duration(seconds: 5),
     String? searchTarget,
