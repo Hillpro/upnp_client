@@ -216,15 +216,15 @@ class DeviceDiscoverer {
     switch (addressType) {
       case InternetAddressType.IPv4:
         return [
-          _MulticastTarget(
-            InternetAddress('239.255.255.250'),
-            '239.255.255.250:1900',
+          (
+            address: InternetAddress('239.255.255.250'),
+            host: '239.255.255.250:1900',
           ),
         ];
       case InternetAddressType.IPv6:
         return [
-          _MulticastTarget(InternetAddress('FF02::C'), '[FF02::C]:1900'),
-          _MulticastTarget(InternetAddress('FF05::C'), '[FF05::C]:1900'),
+          (address: InternetAddress('FF02::C'), host: '[FF02::C]:1900'),
+          (address: InternetAddress('FF05::C'), host: '[FF05::C]:1900'),
         ];
       default:
         throw ArgumentError("Internet Address Type not valid");
@@ -232,9 +232,4 @@ class DeviceDiscoverer {
   }
 }
 
-class _MulticastTarget {
-  final InternetAddress address;
-  final String host;
-
-  const _MulticastTarget(this.address, this.host);
-}
+typedef _MulticastTarget = ({InternetAddress address, String host});

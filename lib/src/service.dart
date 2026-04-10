@@ -11,8 +11,8 @@ import 'package:upnp_client/src/common_services/rendering_control.dart';
 import 'package:upnp_client/src/common_services/connection_manager.dart';
 import 'package:upnp_client/src/common_services/av_transport.dart';
 
-final String _soapEnvelopeNs = 'http://schemas.xmlsoap.org/soap/envelope/';
-final String _soapEncodingNs = 'http://schemas.xmlsoap.org/soap/encoding/';
+const String _soapEnvelopeNs = 'http://schemas.xmlsoap.org/soap/envelope/';
+const String _soapEncodingNs = 'http://schemas.xmlsoap.org/soap/encoding/';
 
 /// UDA 1.1 §3.2.2 — actions must complete within 30 seconds.
 const _actionTimeout = Duration(seconds: 30);
