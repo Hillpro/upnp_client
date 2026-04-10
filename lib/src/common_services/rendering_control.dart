@@ -1,3 +1,4 @@
+import 'package:upnp_client/src/data_type_parsers.dart';
 import 'package:upnp_client/src/service.dart';
 
 /// An UPnP RenderingControl service
@@ -23,7 +24,7 @@ class RenderingControlService extends Service {
   Future<bool> getMute({int instanceId = 0, String channel = 'Master'}) async {
     final args = await invokeAction(
         'GetMute', {'InstanceID': instanceId, 'Channel': channel});
-    return args['CurrentMute'] == '1';
+    return parseUpnpBool(args['CurrentMute']);
   }
 
   Future<void> setMute(

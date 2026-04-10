@@ -50,7 +50,7 @@ enum DataType {
   /// allowed to have a leading sign. Mantissa and/or exponent Is allowed to have
   /// leading zeros, which should be ignored by the recipient. Decimal character
   /// in mantissa is a period, i.e., whole digits in mantissa separated from
-  /// fractional digits by period (“.”). Mantissa separated from exponent by “E”.
+  /// fractional digits by period ("."). Mantissa separated from exponent by "E".
   /// (No currency symbol.) (No grouping of digits in the mantissa, e.g., no
   /// commas.)
   float('float'),
@@ -76,10 +76,10 @@ enum DataType {
   /// Time in a subset of ISO 8601 format with allowed time zone but no date.
   time_tz('time.tz'),
 
-  /// “0” for false or “1” for true. The values “true”, “yes”, “false”, or “no” are
+  /// "0" for false or "1" for true. The values "true", "yes", "false", or "no" are
   /// deprecated and shall not be sent but shall be accepted when received.
-  /// When received, the values “true” and “yes” shall be interpreted as true and
-  /// the values “false” and “no” shall be interpreted as false.
+  /// When received, the values "true" and "yes" shall be interpreted as true and
+  /// the values "false" and "no" shall be interpreted as false.
   boolean('boolean'),
 
   /// MIME-style Base64 encoded binary BLOB. Takes 3 Bytes, splits them into 4
@@ -94,8 +94,8 @@ enum DataType {
   /// Universal Resource Identifier.
   uri('uri'),
 
-  /// Universally Unique ID. See clause 1.1.4, “UUID format and recommended
-  /// generation algorithms” for the MANDATORY UUID format.
+  /// Universally Unique ID. See clause 1.1.4, "UUID format and recommended
+  /// generation algorithms" for the MANDATORY UUID format.
   uuid('uuid');
 
   const DataType(this.value);
