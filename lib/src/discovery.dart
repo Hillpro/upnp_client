@@ -92,7 +92,8 @@ class DeviceDiscoverer {
           return;
         }
 
-        if (headers.indexWhere((e) => e.contains('200 OK')) == -1) {
+        // UDA 1.1 §1.3.3: status line is always first; only accept 200 OK responses.
+        if (!headers.first.contains('200 OK')) {
           return;
         }
 
