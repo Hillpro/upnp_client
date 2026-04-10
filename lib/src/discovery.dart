@@ -177,17 +177,15 @@ class DeviceDiscoverer {
     Duration timeout = const Duration(seconds: 5),
     String? searchTarget,
   }) async {
-    final List<Device> devices = [];
+    final devices = <Device>{};
 
-    var sub = _devices.stream.listen((d) {
-      if (!devices.contains(d)) devices.add(d);
-    });
+    var sub = _devices.stream.listen(devices.add);
 
     _search(searchTarget ?? 'upnp:rootdevice');
     await Future.delayed(timeout);
     await sub.cancel();
 
-    return devices;
+    return devices.toList();
   }
 
   InternetAddress _getBroadcastAddress(InternetAddressType addressType) {
