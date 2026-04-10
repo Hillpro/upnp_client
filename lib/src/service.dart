@@ -132,26 +132,34 @@ class Service {
           .cast<List<int>>()
           .transform(utf8.decoder)
           .join();
-      final XmlDocument xmlResp = XmlDocument.parse(respBody);
-      if (xmlResp.rootElement.name.local != 'Envelope') {
-        throw Exception('ERROR: Invalid SOAP response!\n$respBody');
-      }
 
-      final XmlElement? xmlRespBody = xmlResp.rootElement.getElement(
-        'Body',
-        namespace: _soapEnvelopeNs,
-      );
-
-      if (xmlRespBody == null) {
-        throw Exception('ERROR: Invalid SOAP response!\n$respBody');
+      XmlElement? soapBody;
+      try {
+        final XmlDocument xmlResp = XmlDocument.parse(respBody);
+        if (xmlResp.rootElement.name.local == 'Envelope') {
+          soapBody = xmlResp.rootElement.getElement(
+            'Body',
+            namespace: _soapEnvelopeNs,
+          );
+        }
+      } on XmlException {
+        // Body is not XML (plain text or HTML error page).
       }
 
       if (response.statusCode != 200) {
-        throw UPnPException.tryParseFromBody(xmlRespBody, actionName: name) ??
+        UPnPException? upnpEx;
+        if (soapBody != null) {
+          upnpEx = UPnPException.tryParseFromBody(soapBody, actionName: name);
+        }
+        throw upnpEx ??
             Exception('ERROR: Failed posting action $name!\n$respBody');
       }
 
-      return xmlRespBody;
+      if (soapBody == null) {
+        throw Exception('ERROR: Invalid SOAP response!\n$respBody');
+      }
+
+      return soapBody;
     } finally {
       httpClient.close();
     }
