@@ -58,7 +58,8 @@ class Argument {
 
     name = xml.getElement('name')?.innerText;
     direction = Direction.values.firstWhereOrNull(
-        (dir) => dir.value == xml.getElement('direction')?.innerText);
+      (dir) => dir.value == xml.getElement('direction')?.innerText,
+    );
     relatedStateVariable =
         xml.getElement('relatedStateVariable')?.innerText ?? '';
   }

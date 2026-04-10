@@ -39,10 +39,14 @@ class Device {
 
     description = DeviceDescription.fromXml(xml);
 
-    services =
-        xml.loadList('serviceList', (xml) => Service.fromXmlTyped(this, xml));
-    devices =
-        xml.loadList('deviceList', (xml) => Device.fromXml(xml, null, urlBase));
+    services = xml.loadList(
+      'serviceList',
+      (xml) => Service.fromXmlTyped(this, xml),
+    );
+    devices = xml.loadList(
+      'deviceList',
+      (xml) => Device.fromXml(xml, null, urlBase),
+    );
   }
 
   RenderingControlService? renderingControlService() =>

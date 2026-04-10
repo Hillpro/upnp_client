@@ -42,7 +42,11 @@ class ProtocolInfo {
   final String additionalInfo;
 
   const ProtocolInfo._(
-      this.protocol, this.network, this.contentFormat, this.additionalInfo);
+    this.protocol,
+    this.network,
+    this.contentFormat,
+    this.additionalInfo,
+  );
 
   static ProtocolInfo fromString(String protocolInfoString) {
     final List<String> parts = protocolInfoString.split(':');

@@ -48,20 +48,29 @@ class UPnPException implements Exception {
   /// ```
   ///
   /// Returns `null` if the body does not contain a parseable UPnP fault.
-  static UPnPException? tryParseFromBody(XmlElement body,
-      {String? actionName}) {
+  static UPnPException? tryParseFromBody(
+    XmlElement body, {
+    String? actionName,
+  }) {
     // Find <Fault> — may be namespace-prefixed or not
-    final fault = body.getElement('Fault',
-            namespace: 'http://schemas.xmlsoap.org/soap/envelope/') ??
+    final fault =
+        body.getElement(
+          'Fault',
+          namespace: 'http://schemas.xmlsoap.org/soap/envelope/',
+        ) ??
         body.childElements.where((e) => e.name.local == 'Fault').firstOrNull;
     if (fault == null) return null;
 
-    final detail = fault.getElement('detail') ??
+    final detail =
+        fault.getElement('detail') ??
         fault.childElements.where((e) => e.name.local == 'detail').firstOrNull;
     if (detail == null) return null;
 
-    final upnpError = detail.getElement('UPnPError',
-            namespace: 'urn:schemas-upnp-org:control-1-0') ??
+    final upnpError =
+        detail.getElement(
+          'UPnPError',
+          namespace: 'urn:schemas-upnp-org:control-1-0',
+        ) ??
         detail.childElements
             .where((e) => e.name.local == 'UPnPError')
             .firstOrNull;
