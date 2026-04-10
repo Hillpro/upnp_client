@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:upnp_client/src/device.dart';
 import 'package:xml/xml.dart';
@@ -143,7 +144,9 @@ class DeviceDiscoverer {
     }
   }
 
-  void _search([String searchTarget = 'upnp:rootdevice']) {
+  Future<void> _search([String searchTarget = 'upnp:rootdevice']) async {
+    final random = Random();
+
     for (var socket in _sockets) {
       final targets = _getMulticastTargets(socket.address.type);
 
@@ -161,12 +164,15 @@ class DeviceDiscoverer {
 
         final data = utf8.encode(buff.toString().replaceAll('\n', '\r\n'));
 
-        // Repeated 3 times because UDP messages might be lost
+        // UDA 1.1 §1.3.2: retransmit 3x with a random delay to avoid flooding.
         for (var i = 0; i < 3; i++) {
           runZonedGuarded(
             () => socket.send(data, target.address, 1900),
             _errors.addError,
           );
+          if (i < 2) {
+            await Future.delayed(Duration(milliseconds: random.nextInt(100)));
+          }
         }
       }
     }
@@ -182,7 +188,7 @@ class DeviceDiscoverer {
 
     var sub = _devices.stream.listen(devices.add);
 
-    _search(searchTarget ?? 'upnp:rootdevice');
+    await _search(searchTarget ?? 'upnp:rootdevice');
     await Future.delayed(timeout);
     await sub.cancel();
 
