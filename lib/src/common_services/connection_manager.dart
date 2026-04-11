@@ -46,13 +46,21 @@ class ProtocolInfo {
     this.additionalInfo,
   );
 
+  /// Parses a `<protocol>:<network>:<contentFormat>:<additionalInfo>` string.
+  /// The additionalInfo field may contain colons (e.g. DLNA.ORG_OP=01:01),
+  /// per ConnectionManager:1 §2.5.2.
   static ProtocolInfo fromString(String protocolInfoString) {
     final List<String> parts = protocolInfoString.split(':');
-    if (parts.length != 4) {
+    if (parts.length < 4) {
       throw ArgumentError('Invalid protocol info string: $protocolInfoString');
     }
 
-    return ProtocolInfo._(parts[0], parts[1], parts[2], parts[3]);
+    return ProtocolInfo._(
+      parts[0],
+      parts[1],
+      parts[2],
+      parts.sublist(3).join(':'),
+    );
   }
 
   @override
