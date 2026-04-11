@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:upnp_client/src/diagnostics.dart';
 import 'package:upnp_client/src/xml_utils.dart';
 import 'package:upnp_client/src/service.dart';
 import 'package:xml/xml.dart';
@@ -27,14 +28,12 @@ class Action {
   }
 
   @override
-  String toString() {
-    StringBuffer sb = StringBuffer()..write('Action{name: $name, arguments: [');
-    for (var argument in arguments) {
-      sb.write('\n\t${argument.toString().replaceAll('\n', '\n\t')}');
-    }
-    sb.write('\n]}');
-    return sb.toString();
-  }
+  String toString() =>
+      buildDescription(runtimeType, describeFields(), describeChildren());
+
+  Map<String, dynamic> describeFields() => {'name': name};
+
+  Map<String, List> describeChildren() => {'arguments': arguments};
 }
 
 /// An UPnP Action Argument
@@ -66,8 +65,14 @@ class Argument {
 
   @override
   String toString() {
-    return 'Argument{name: $name, direction: $direction, relatedStateVariable: $relatedStateVariable}';
+    return buildDescription(runtimeType, describeFields());
   }
+
+  Map<String, dynamic> describeFields() => {
+    'name': name,
+    'direction': direction,
+    'relatedStateVariable': relatedStateVariable,
+  };
 }
 
 /// The direction of an UPnP Action Argument

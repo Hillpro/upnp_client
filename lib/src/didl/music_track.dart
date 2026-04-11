@@ -1,11 +1,12 @@
+import 'package:upnp_client/src/diagnostics.dart';
 import 'package:xml/xml.dart';
 import 'package:upnp_client/src/didl/utils.dart';
 
-final String _didlLiteNamespace =
+const String _didlLiteNamespace =
     'urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/';
-final String _dcNamespace = 'http://purl.org/dc/elements/1.1/';
-final String _upnpNamespace = 'urn:schemas-upnp-org:metadata-1-0/upnp/';
-final String _secNamespace = 'http://www.sec.co.kr/';
+const String _dcNamespace = 'http://purl.org/dc/elements/1.1/';
+const String _upnpNamespace = 'urn:schemas-upnp-org:metadata-1-0/upnp/';
+const String _secNamespace = 'http://www.sec.co.kr/';
 
 class MusicTrack {
   final String id;
@@ -69,6 +70,14 @@ class MusicTrack {
 
   @override
   String toString() {
-    return 'MusicTrack{id: $id, title: $title, artist: $artist, album: $album, duration: $duration}';
+    return buildDescription(runtimeType, describeFields());
   }
+
+  Map<String, dynamic> describeFields() => {
+    'id': id,
+    'title': title,
+    'artist': artist,
+    'album': album,
+    'duration': duration,
+  };
 }

@@ -45,9 +45,4 @@ class RenderingControlService extends Service {
       'DesiredMute': mute ? '1' : '0',
     });
   }
-
-  @override
-  String toString() {
-    return 'RenderingControlService{}';
-  }
 }

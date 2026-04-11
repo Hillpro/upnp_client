@@ -1,4 +1,5 @@
 import 'package:xml/xml.dart';
+import 'package:upnp_client/src/xml_utils.dart';
 
 /// UDA 1.1 §3.2.5 — UPnP error codes returned in SOAP Fault responses.
 ///
@@ -53,27 +54,19 @@ class UPnPException implements Exception {
     String? actionName,
   }) {
     // Find <Fault> — may be namespace-prefixed or not
-    final fault =
-        body.getElement(
-          'Fault',
-          namespace: 'http://schemas.xmlsoap.org/soap/envelope/',
-        ) ??
-        body.childElements.where((e) => e.name.local == 'Fault').firstOrNull;
+    final fault = body.getElementAnyNs(
+      'Fault',
+      namespace: 'http://schemas.xmlsoap.org/soap/envelope/',
+    );
     if (fault == null) return null;
 
-    final detail =
-        fault.getElement('detail') ??
-        fault.childElements.where((e) => e.name.local == 'detail').firstOrNull;
+    final detail = fault.getElementAnyNs('detail');
     if (detail == null) return null;
 
-    final upnpError =
-        detail.getElement(
-          'UPnPError',
-          namespace: 'urn:schemas-upnp-org:control-1-0',
-        ) ??
-        detail.childElements
-            .where((e) => e.name.local == 'UPnPError')
-            .firstOrNull;
+    final upnpError = detail.getElementAnyNs(
+      'UPnPError',
+      namespace: 'urn:schemas-upnp-org:control-1-0',
+    );
     if (upnpError == null) return null;
 
     final codeText = upnpError.getElement('errorCode')?.innerText;

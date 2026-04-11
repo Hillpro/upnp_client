@@ -44,7 +44,7 @@ enum DataType {
 
   /// Same as r8 but no more than 14 digits to the left of the decimal point and no
   /// more than 4 to the right.
-  fixed_14_4('float.14.4'),
+  fixed_14_4('fixed.14.4'),
 
   /// Floating point number. Mantissa (left of the decimal) and/or exponent is
   /// allowed to have a leading sign. Mantissa and/or exponent Is allowed to have

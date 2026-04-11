@@ -1,17 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:upnp_client/src/device.dart';
 import 'package:xml/xml.dart';
 
 const _descriptionTimeout = Duration(seconds: 30);
 
-///
 /// [DeviceDiscoverer] uses Simple Service Discovery Protocol Based on UDP Multicast (SSDP) to issue searches and find UPnP devices and services.
 ///
 /// You can start the discoverer in either IPv4 or IPv6, or both.
-///
 class DeviceDiscoverer {
   final _sockets = <RawDatagramSocket>[];
   final _devices = StreamController<Device>.broadcast();
@@ -21,25 +20,19 @@ class DeviceDiscoverer {
     InternetAddressType.IPv6,
   ];
 
-  ///
   /// A stream of discovered UPnP devices.
-  ///
   Stream<Device> get devices => _devices.stream;
 
-  ///
   /// A stream of errors occurred during the discovery process.
   /// These errors are not fatal and will not stop the discovery process.
-  ///
   Stream<void> get errors => _errors.stream;
 
-  ///
   /// Starts the Discoverer.
   ///
   /// Starts a socket to listen to UPnP devices responses on a given [port]
   /// Listen for all given [InternetAddressType]
   /// By default, a socket will be created for every supported types.
   /// Currently, IP version 4 (IPv4), IP version 6 (IPv6) are supported.
-  ///
   Future<void> start({
     int port = 0,
     int multicastHops = 2,
@@ -56,11 +49,9 @@ class DeviceDiscoverer {
     }
   }
 
-  ///
   /// Stops the Discoverer.
   ///
-  /// Closes all udp sockets
-  ///
+  /// Closes all udp sockets.
   void stop() {
     for (var socket in _sockets) {
       socket.close();
@@ -68,12 +59,10 @@ class DeviceDiscoverer {
     _sockets.clear();
   }
 
-  ///
   /// Disposes the Discoverer.
   ///
   /// Stops discovery and closes all streams. After calling this,
   /// the discoverer cannot be reused.
-  ///
   void dispose() {
     stop();
     _devices.close();
@@ -104,7 +93,8 @@ class DeviceDiscoverer {
           return;
         }
 
-        if (headers.indexWhere((e) => e.contains('200 OK')) == -1) {
+        // UDA 1.1 §1.3.3: status line is always first; only accept 200 OK responses.
+        if (!headers.first.contains('200 OK')) {
           return;
         }
 
@@ -154,7 +144,9 @@ class DeviceDiscoverer {
     }
   }
 
-  void _search([String searchTarget = 'upnp:rootdevice']) {
+  Future<void> _search([String searchTarget = 'upnp:rootdevice']) async {
+    final random = Random();
+
     for (var socket in _sockets) {
       final targets = _getMulticastTargets(socket.address.type);
 
@@ -172,36 +164,35 @@ class DeviceDiscoverer {
 
         final data = utf8.encode(buff.toString().replaceAll('\n', '\r\n'));
 
-        // Repeated 3 times because UDP messages might be lost
+        // UDA 1.1 §1.3.2: retransmit 3x with a random delay to avoid flooding.
         for (var i = 0; i < 3; i++) {
           runZonedGuarded(
             () => socket.send(data, target.address, 1900),
             _errors.addError,
           );
+          if (i < 2) {
+            await Future.delayed(Duration(milliseconds: random.nextInt(100)));
+          }
         }
       }
     }
   }
 
-  ///
   /// Search for UPnP devices matching [searchTarget]
-  /// for a given [timeout] time, then returns the list
-  ///
+  /// for a given [timeout] time, then returns the list.
   Future<List<Device>> getDevices({
     Duration timeout = const Duration(seconds: 5),
     String? searchTarget,
   }) async {
-    final List<Device> devices = [];
+    final devices = <Device>{};
 
-    var sub = _devices.stream.listen((d) {
-      if (!devices.contains(d)) devices.add(d);
-    });
+    var sub = _devices.stream.listen(devices.add);
 
-    _search(searchTarget ?? 'upnp:rootdevice');
+    await _search(searchTarget ?? 'upnp:rootdevice');
     await Future.delayed(timeout);
     await sub.cancel();
 
-    return devices;
+    return devices.toList();
   }
 
   InternetAddress _getBroadcastAddress(InternetAddressType addressType) {
@@ -225,15 +216,15 @@ class DeviceDiscoverer {
     switch (addressType) {
       case InternetAddressType.IPv4:
         return [
-          _MulticastTarget(
-            InternetAddress('239.255.255.250'),
-            '239.255.255.250:1900',
+          (
+            address: InternetAddress('239.255.255.250'),
+            host: '239.255.255.250:1900',
           ),
         ];
       case InternetAddressType.IPv6:
         return [
-          _MulticastTarget(InternetAddress('FF02::C'), '[FF02::C]:1900'),
-          _MulticastTarget(InternetAddress('FF05::C'), '[FF05::C]:1900'),
+          (address: InternetAddress('FF02::C'), host: '[FF02::C]:1900'),
+          (address: InternetAddress('FF05::C'), host: '[FF05::C]:1900'),
         ];
       default:
         throw ArgumentError("Internet Address Type not valid");
@@ -241,9 +232,4 @@ class DeviceDiscoverer {
   }
 }
 
-class _MulticastTarget {
-  final InternetAddress address;
-  final String host;
-
-  const _MulticastTarget(this.address, this.host);
-}
+typedef _MulticastTarget = ({InternetAddress address, String host});

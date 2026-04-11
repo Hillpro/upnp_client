@@ -2,6 +2,7 @@ import 'package:xml/xml.dart';
 import 'dart:convert';
 import 'package:upnp_client/src/device.dart';
 import 'dart:io';
+import 'package:upnp_client/src/diagnostics.dart';
 import 'package:upnp_client/src/xml_utils.dart';
 import 'package:upnp_client/src/action.dart';
 import 'package:upnp_client/src/data_type.dart';
@@ -11,8 +12,8 @@ import 'package:upnp_client/src/common_services/rendering_control.dart';
 import 'package:upnp_client/src/common_services/connection_manager.dart';
 import 'package:upnp_client/src/common_services/av_transport.dart';
 
-final String _soapEnvelopeNs = 'http://schemas.xmlsoap.org/soap/envelope/';
-final String _soapEncodingNs = 'http://schemas.xmlsoap.org/soap/encoding/';
+const String _soapEnvelopeNs = 'http://schemas.xmlsoap.org/soap/envelope/';
+const String _soapEncodingNs = 'http://schemas.xmlsoap.org/soap/encoding/';
 
 /// UDA 1.1 §3.2.2 — actions must complete within 30 seconds.
 const _actionTimeout = Duration(seconds: 30);
@@ -132,26 +133,34 @@ class Service {
           .cast<List<int>>()
           .transform(utf8.decoder)
           .join();
-      final XmlDocument xmlResp = XmlDocument.parse(respBody);
-      if (xmlResp.rootElement.name.local != 'Envelope') {
-        throw Exception('ERROR: Invalid SOAP response!\n$respBody');
-      }
 
-      final XmlElement? xmlRespBody = xmlResp.rootElement.getElement(
-        'Body',
-        namespace: _soapEnvelopeNs,
-      );
-
-      if (xmlRespBody == null) {
-        throw Exception('ERROR: Invalid SOAP response!\n$respBody');
+      XmlElement? soapBody;
+      try {
+        final XmlDocument xmlResp = XmlDocument.parse(respBody);
+        if (xmlResp.rootElement.name.local == 'Envelope') {
+          soapBody = xmlResp.rootElement.getElement(
+            'Body',
+            namespace: _soapEnvelopeNs,
+          );
+        }
+      } on XmlException {
+        // Body is not XML (plain text or HTML error page).
       }
 
       if (response.statusCode != 200) {
-        throw UPnPException.tryParseFromBody(xmlRespBody, actionName: name) ??
+        UPnPException? upnpEx;
+        if (soapBody != null) {
+          upnpEx = UPnPException.tryParseFromBody(soapBody, actionName: name);
+        }
+        throw upnpEx ??
             Exception('ERROR: Failed posting action $name!\n$respBody');
       }
 
-      return xmlRespBody;
+      if (soapBody == null) {
+        throw Exception('ERROR: Invalid SOAP response!\n$respBody');
+      }
+
+      return soapBody;
     } finally {
       httpClient.close();
     }
@@ -202,9 +211,9 @@ class Service {
   }
 
   @override
-  String toString() {
-    return 'Service{type: $type, id: $id}';
-  }
+  String toString() => buildDescription(runtimeType, describeFields());
+
+  Map<String, dynamic> describeFields() => {'type': type, 'id': id};
 }
 
 /// An UPnP Service Description
@@ -231,18 +240,15 @@ class ServiceDescription {
   }
 
   @override
-  String toString() {
-    StringBuffer sb = StringBuffer('ServiceDescription{actions: [');
-    for (var action in actions) {
-      sb.write('\n\t${action.toString().replaceAll('\n', '\n\t')}');
-    }
-    sb.write('\n], stateVariables: [');
-    for (var stateVariable in stateVariables) {
-      sb.write('\n\t${stateVariable.toString().replaceAll('\n', '\n\t')}');
-    }
-    sb.write('\n]}');
-    return sb.toString();
-  }
+  String toString() =>
+      buildDescription(runtimeType, describeFields(), describeChildren());
+
+  Map<String, dynamic> describeFields() => {};
+
+  Map<String, List> describeChildren() => {
+    'actions': actions,
+    'stateVariables': stateVariables,
+  };
 }
 
 /// An UPnP State Variable
@@ -277,6 +283,13 @@ class StateVariable {
 
   @override
   String toString() {
-    return 'StateVariable{name: $name, sendEventsAttribute: $sendEventsAttribute, dataType: $dataType, allowedValues: $allowedValues}';
+    return buildDescription(runtimeType, describeFields());
   }
+
+  Map<String, dynamic> describeFields() => {
+    'name': name,
+    'sendEventsAttribute': sendEventsAttribute,
+    'dataType': dataType,
+    'allowedValues': allowedValues,
+  };
 }
