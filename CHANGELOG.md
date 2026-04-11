@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.4
+
+- **INFO**: Moved UPnP specs to doc/spec
+- **FEAT**: Improved sendToControlUrl() statusCode handling
+- **FEAT**: Faster device discovery stream deduplication
+- **FIX**: ProtocolInfo colons parsing (ConnectionManager:1 §2.5.2)
+- **FIX**: Added random delay between UDP retransmission (UDA 1.1 §1.3.2)
+- **FIX**: Only check for `200 OK` response in status line (UDA 1.1 §1.3.3)
+- **FIX**: Device equality and hashCode for UUID-less devices
+- **FIX**: fixed_14_4 DataType value
+
+
 ## 1.0.3
 
 - **INFO**: Updated the SDK lower bound to 3.8
