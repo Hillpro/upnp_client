@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.5
+
+- **FIX**: Excluded `doc/` from the published package (1.0.4 shipped 4.5 MB of spec PDFs)
+
+
 ## 1.0.4
 
 - **INFO**: Moved UPnP specs to doc/spec
