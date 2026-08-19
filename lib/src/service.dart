@@ -72,7 +72,7 @@ class Service {
     id = xml.getElement('serviceId')?.innerText;
     url = xml.getElement('SCPDURL')?.innerText;
     controlUrl = xml.getElement('controlURL')?.innerText;
-    eventSubUrl = xml.getElement('eventsubURL')?.innerText;
+    eventSubUrl = xml.getElement('eventSubURL')?.innerText;
   }
 
   Future<ServiceDescription> getDescription() async {
