@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.2.0
+
+- **FEAT**: Widened the `xml` constraint to `>=6.6.1 <8.0.0`, so packages depending on xml 7 are no longer blocked
+- **INFO**: Added a test suite, and CI running analyze, tests and packaging checks on pull requests
+
+
 ## 1.1.1
 
 - **FIX**: Check the HTTP status before parsing device and service descriptions (UDA 1.1 §2.11)
