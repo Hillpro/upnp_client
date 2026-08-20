@@ -10,6 +10,7 @@ jobs:
   publish:
     permissions:
       id-token: write # Required for authentication using OIDC
+      contents: write # Required to create the GitHub release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -30,3 +31,13 @@ jobs:
         run: dart pub publish --dry-run
       - name: Publish
         run: dart pub publish --force
+
+      # Last, so a failed publish never leaves a release advertising a
+      # version that is not on pub.dev. The tag is passed through env rather
+      # than interpolated into the script, and ${TAG#v} turns v1.0.0 into the
+      # release name 1.0.0.
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release create "$TAG" --title "${TAG#v}" --generate-notes
