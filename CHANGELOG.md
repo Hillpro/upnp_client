@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.2.1
+
+- **FIX**: `Device` equality and hashCode disagreed when one device had a UDN and the other did not (UDA 1.1 §2.3)
+
+
 ## 1.2.0
 
 - **FEAT**: Widened the `xml` constraint to `>=6.6.1 <8.0.0`, so packages depending on xml 7 are no longer blocked
