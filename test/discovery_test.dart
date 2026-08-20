@@ -51,17 +51,27 @@ void main() {
       'http://${server.address.address}:${server.port}/desc.xml';
 
   /// Sends a raw SSDP payload to the discoverer's socket.
+  ///
+  /// [RawDatagramSocket.send] returns a short count when the socket is not
+  /// yet writable, and the datagram is *not* queued - the call has to be
+  /// retried or the payload is silently lost. That loss is invisible on an
+  /// idle machine and intermittent on a loaded CI runner.
   Future<void> sendSsdp(String payload) async {
+    final data = utf8.encode(payload.replaceAll('\n', '\r\n'));
     final sender = await RawDatagramSocket.bind(
       InternetAddress.loopbackIPv4,
       0,
     );
-    sender.send(
-      utf8.encode(payload.replaceAll('\n', '\r\n')),
-      InternetAddress.loopbackIPv4,
-      ssdpPort,
-    );
-    sender.close();
+    try {
+      for (var attempt = 0; attempt < 100; attempt++) {
+        final sent = sender.send(data, InternetAddress.loopbackIPv4, ssdpPort);
+        if (sent == data.length) return;
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      }
+      fail('SSDP payload could not be sent after 100 attempts');
+    } finally {
+      sender.close();
+    }
   }
 
   String searchResponse({String? status, String? locationHeader}) =>
