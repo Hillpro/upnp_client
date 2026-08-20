@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.0
+
+- **FEAT**: New `MusicTrack.protocolInfo` for the required `res@protocolInfo` attribute
+- **FIX**: DIDL-Lite element order, `dc:title` precedes `upnp:class` (ContentDirectory:1)
+- **FIX**: SOAP `in` argument order now follows the SCPD (UDA 1.1 §3.2.1)
+- **FIX**: `eventSubURL` element name (UDA 1.1 §2.3)
+- **INFO**: Added UPnP specs and XML schemas under doc/, with an index
+
+
 ## 1.0.5
 
 - **FIX**: Excluded `doc/` from the published package (1.0.4 shipped 4.5 MB of spec PDFs)
