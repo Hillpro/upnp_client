@@ -1,0 +1,30 @@
+<xsd:schema
+ targetNamespace="urn:schemas-upnp-org:control-1-0"
+ xmlns="urn:schemas-upnp-org:control-1-0"
+ xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xsd:element name="UPnPError" type="UPnPErrorType"/>
+	<xsd:complexType name="UPnPErrorType">
+		<xsd:sequence>
+			<xsd:element name="errorCode">
+				<xsd:complexType>
+					<xsd:simpleContent>
+						<xsd:extension base="xsd:int">
+							<xsd:anyAttribute namespace="##other" processContents="lax"/>
+						</xsd:extension>
+					</xsd:simpleContent>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="errorDescription">
+				<xsd:complexType>
+					<xsd:simpleContent>
+						<xsd:extension base="xsd:string">
+							<xsd:anyAttribute namespace="##other" processContents="lax"/>
+						</xsd:extension>
+					</xsd:simpleContent>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:any namespace="##other" minOccurs="0" maxOccurs="unbounded" processContents="lax"/>
+		</xsd:sequence>
+		<xsd:anyAttribute namespace="##other" processContents="lax"/>
+	</xsd:complexType>
+</xsd:schema>

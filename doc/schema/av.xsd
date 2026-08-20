@@ -1,0 +1,794 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:av="urn:schemas-upnp-org:av:av" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:schemas-upnp-org:av:av" version="3-20130331">
+	<xsd:annotation>
+		<xsd:documentation xml:lang="en">
+		Note that all schema supplied by the UPnP Forum AV WC committee are for informational use only and that the 
+		standardized DCPs describe the normative requirements for these schema. Some schema provided do not necessarily
+		embody requirements regarding number of element occurrances allowed or their ordering. 
+		
+		Schema for UPnP A/V AV
+		</xsd:documentation>
+	</xsd:annotation>
+	<!--=============================-=============================-->
+	<!--                       String Types                        -->
+	<!--=============================-=============================-->
+	<xsd:simpleType name="_NSName.type">
+		<xsd:annotation>
+			<xsd:documentation>
+				General Namespace Name type.
+				Defines what is allowed in a namespace name value.
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<!-- XXX - Need to define the pattern for a namespace name-->
+			<!-- Sample from pname - xsd:pattern value="([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]*(@[\i-[:]][\c-[:]]*)?"/-->
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="NSName">
+		<xsd:union memberTypes="av:_NSName.type"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="_pName.attributeOnly">
+		<xsd:annotation>
+			<xsd:documentation>
+				Dependent property name that has no associated independent property.
+				MAY include namespace prefix
+				MUST NOT include independent property name
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="([\i-[:]][\c-[:]]*:)?@[\i-[:]][\c-[:]]*"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="_pName.elementIncluded">
+		<xsd:annotation>
+			<xsd:documentation>
+				General property name type
+				MUST include independent property name
+				MAY include namespace prefix
+				MAY include dependent property name
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]*(@[\i-[:]][\c-[:]]*)?"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="pName">
+		<xsd:union memberTypes="av:_pName.attributeOnly av:_pName.elementIncluded"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="pName.csv.1-n">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]*(@[\i-[:]][\c-[:]])?)|(@[\i-[:]][\c-[:]])(,(([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]*(@[\i-[:]][\c-[:]])?)|(@[\i-[:]][\c-[:]]))*"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="pName.csv.0-n">
+		<xsd:union memberTypes="av:pName.csv.1-n av:string.len.0"/>
+	</xsd:simpleType>
+	<!--
+	     Use the following names in type names that represent individual
+	     strings or delimited sequences of strings to distinguish the cases
+	     where individual string components MUST be empty vs. MAY be empty vs.
+	     MUST NOT be empty:
+	     
+	        string.len.0
+	        string.len.1_
+			string.len.0_
+	-->
+	<!--4,294,967,295-->
+	<xsd:simpleType name="_unsignedInt0">
+		<xsd:restriction base="xsd:token">
+			<xsd:pattern value="0*[0-9]{1,9}"/>
+			<xsd:pattern value="0*[1-3][0-9]{9}"/>
+			<xsd:pattern value="0*4[0-1][0-9]{8}"/>
+			<xsd:pattern value="0*42[0-8][0-9]{7}"/>
+			<xsd:pattern value="0*429[0-3][0-9]{6}"/>
+			<xsd:pattern value="0*4294[0-8][0-9]{5}"/>
+			<xsd:pattern value="0*42949[0-5][0-9]{4}"/>
+			<xsd:pattern value="0*429496[0-6][0-9]{3}"/>
+			<xsd:pattern value="0*4294967[0-1][0-9]{2}"/>
+			<xsd:pattern value="0*42949672[0-8][0-9]"/>
+			<xsd:pattern value="0*429496729[0-5]"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="_unsignedInt">
+		<xsd:restriction base="xsd:token">
+			<xsd:pattern value="0*(([0-9]{1,9})|([1-3][0-9]{9})|(4[0-1][0-9]{8})|(42[0-8][0-9]{7})|(429[0-3][0-9]{6})|(4294[0-8][0-9]{5})|(42949[0-5][0-9]{4})|(429496[0-6][0-9]{3})|(4294967[0-1][0-9]{2})|(42949672[0-8][0-9])|(429496729[0-5]))"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string.len.0">
+		<xsd:restriction base="xsd:string">
+			<xsd:length value="0"/>
+			<xsd:whiteSpace value="collapse"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string.len.1_">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="\s*\S+\s*"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string.len.0_">
+		<xsd:restriction base="xsd:string"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="string.len.0_256">
+		<xsd:restriction base="xsd:string">
+			<xsd:maxLength value="256"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="NCName.len.1_31">
+		<xsd:restriction base="xsd:NCName">
+			<xsd:maxLength value="31"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="csv.0_.string.len.1_">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="([^,]|\\,)+(,([^,]|\\,)+)*"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="csv.0_.string.len.0_">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="([^,]|\\,)*(,([^,]|\\,)*)*"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="csv.1_.string.len.1_">
+		<xsd:restriction base="av:csv.0_.string.len.1_">
+			<xsd:minLength value="1"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="csv.1_.string.len.0_">
+		<xsd:restriction base="av:csv.0_.string.len.0_">
+			<xsd:minLength value="1"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="csv.4.string.len.1_">
+		<xsd:restriction base="av:csv.0_.string.len.1_">
+			<xsd:pattern value="([^,]|\\,)+(,([^,]|\\,)+){3}"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="csv.4.string.len.0_">
+		<xsd:restriction base="av:csv.0_.string.len.0_">
+			<xsd:pattern value="([^,]|\\,)*(,([^,]|\\,)*){3}"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="csv.0_.unsignedInteger">
+		<xsd:union memberTypes="av:csv.1_.unsignedInteger av:string.len.0"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="csv.1_.unsignedInteger">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="([0-9]+)(,[0-9]+)*"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="csv.1_Name">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(\i\c*)(,(\i\c*))*"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="csv.1_.QName">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]*(,([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]*)*"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="csv.1_.NCName">
+		<xsd:restriction base="av:csv.1_.QName">
+			<xsd:pattern value="[^:]+"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="csv.1_.colonDelimPairs">
+		<xsd:restriction base="xsd:token">
+			<xsd:pattern value="[^:]+:[^:]+(,[^:]+:[^:]+)*"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!--=============================-=============================-->
+	<!--                      Named Constants                      -->
+	<!--=============================-=============================-->
+	<xsd:simpleType name="string.const.ALL">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="ALL"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string.const.ANY">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="ANY"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string.const.AUTO">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="AUTO"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string.const.DEFAULT">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="DEFAULT"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string.const.FIRST-RUN">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="FIRST-RUN"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string.const.HIGHEST">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="HIGHEST"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string.const.INFINITY">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="INFINITY"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string.const.LOWEST">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="LOWEST"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string.const.NOT_IMPLEMENTED">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="NOT_IMPLEMENTED"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string.const.NOW">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="NOW"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string.const.OBJECTID">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="OBJECTID"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string.const.PREDEF">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="PREDEF"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string.const.REPEAT">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="REPEAT"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string.const.UNBOUNDED">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="UNBOUNDED"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string.const.UNKNOWN">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="UNKNOWN"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!--=============================-=============================-->
+	<!--                     Numeric Datatypes                     -->
+	<!--=============================-=============================-->
+	<xsd:simpleType name="unsignedInt.or.UNKNOWN">
+		<xsd:union memberTypes="xsd:unsignedInt av:string.const.UNKNOWN"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="unsignedInt.or.UNBOUNDED">
+		<xsd:union memberTypes="xsd:unsignedInt av:string.const.UNBOUNDED"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="positiveInt">
+		<xsd:restriction base="xsd:unsignedInt">
+			<xsd:minInclusive value="1"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="rational">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="-?[0-9]+(/0*[1-9][0-9]*)?"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="nonZeroRational">
+		<xsd:restriction base="av:rational">
+			<xsd:pattern value="[^/]*[1-9].*"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="long.-1_">
+		<xsd:restriction base="xsd:long">
+			<xsd:minInclusive value="-1"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="int.-1_">
+		<xsd:restriction base="xsd:int">
+			<xsd:minInclusive value="-1"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!--=============================-=============================-->
+	<!--                       Time Datatypes                      -->
+	<!--=============================-=============================-->
+	<!--
+				EBNF from ScheduledRecording:1 1.00
+				
+		sched-start		::=	date-time	|
+									day-of-yr-time	|
+									named-day-time	|
+									T-labeled-time	|
+									'NOW'
+		start-range		::=	(date-time|'NOW') '/' (date-time|'INFINITY')
+		
+		duration			::=	'P' [n 'D'] time
+		duration-long	::=	duration|'INFINITY'
+		duration-any	::=	duration|'INFINITY'|'ANY'
+		duration-adj	::=	('+'|'-') duration
+		duration-range	::=	duration '/' duration-long
+		
+		date-time		::=	yyyy '-' mm '-' dd T-labeled-time
+		day-of-yr-time	::=	         mm '-' dd T-labeled-time
+		named-day-time	::=	         named-day T-labeled-time
+		
+		T-labeled-time	::=	'T' time [zone]
+		time				::=	HH ':' MM ':' SS
+		zone				::=	'Z'|(('+'|'-') HH ':' MM)
+		month-day		::=	mm '-' dd
+		named-day		::=	'MON'|'TUE'|'WED'|'THU'|'FRI'|'SAT'|'SUN'|
+									'MON-FRI'|'MON-SAT'
+		n					::=	1*DIGIT (* non-negative integer *)
+		yyyy				::=	4DIGIT  (* 0001-9999 *)
+		mm					::=	2DIGIT  (* 01-12 *)
+		
+	-->
+	<xsd:simpleType name="dateTime">
+		<xsd:annotation>
+			<xsd:documentation> Disallows fractional seconds </xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:dateTime">
+			<xsd:pattern value="[^\.]*"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="signedDuration">
+		<xsd:restriction base="xsd:token">
+			<xsd:pattern value="[-+]P([0-9]*D)?(2[0-3]|[0-1][0-9])(:[0-5][0-9]){2}"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="unsignedDuration">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="P([0-9]*D)?(2[0-3]|[0-1][0-9])(:[0-5][0-9]){2}"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="unsignedDuration.or.INFINITY">
+		<xsd:union memberTypes="av:unsignedDuration av:string.const.INFINITY"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="unsignedDuration.or.INFINITY.or.ANY">
+		<xsd:union memberTypes="av:unsignedDuration.or.INFINITY av:string.const.ANY"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="dayOfWeek.en.len.3">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="SUN"/>
+			<xsd:enumeration value="MON"/>
+			<xsd:enumeration value="TUE"/>
+			<xsd:enumeration value="WED"/>
+			<xsd:enumeration value="THU"/>
+			<xsd:enumeration value="FRI"/>
+			<xsd:enumeration value="SAT"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- Original duration definition in CDS:1 -->
+	<xsd:simpleType name="duration.cds1.decFrac">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[-+]?[0-9]+(:[0-5][0-9]){2}(\.[0-9]+)?"/>
+		</xsd:restriction>
+		<!-- Decimal fraction version -->
+	</xsd:simpleType>
+	<xsd:simpleType name="duration.cds1.numDenomFrac">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[-+]?[0-9]+(:[0-5][0-9]){2}(\.[0-9]+/[0-9]+)?"/>
+		</xsd:restriction>
+		<!-- Numerator/denominator fraction version -->
+	</xsd:simpleType>
+	<xsd:simpleType name="duration.cds1">
+		<xsd:union memberTypes="av:duration.cds1.decFrac av:duration.cds1.numDenomFrac"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="duration.cds1.or.NOT_IMPLEMENTED">
+		<xsd:union memberTypes="av:duration.cds1 av:string.const.NOT_IMPLEMENTED"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="daylightSaving.type">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="DAYLIGHTSAVING"/>
+			<xsd:enumeration value="STANDARD"/>
+			<xsd:enumeration value="UNKNOWN"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="startTimeUsage">
+		<xsd:restriction base="xsd:string"/>
+	</xsd:simpleType>
+	<!--=============================-=============================-->
+	<!--                Internet-related datatypes                 -->
+	<!--=============================-=============================-->
+	<xsd:simpleType name="domainName">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="([^\.]+\.)+[^\.]+\.?"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!--===========================================================-->
+	<!--                                                           -->
+	<!--                  UPnP Specific Datatypes                  -->
+	<!--                                                           -->
+	<!--===========================================================-->
+	<xsd:simpleType name="UDN">
+		<xsd:restriction base="xsd:anyURI">
+			<xsd:pattern value="uuid:.+"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!--===========================================================-->
+	<!--                                                           -->
+	<!--                   AV Specific Datatypes                   -->
+	<!--                                                           -->
+	<!--===========================================================-->
+	<xsd:simpleType name="sched-start">
+		<xsd:union memberTypes="av:dateTime xsd:string"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="dateTime-range">
+		<xsd:restriction base="xsd:token">
+			<xsd:pattern value=".+/.+"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="duration-range">
+		<xsd:restriction base="xsd:token">
+			<xsd:pattern value=".+/.+"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="radioBand.wc.values">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="AM"/>
+			<xsd:enumeration value="FM"/>
+			<xsd:enumeration value="Shortwave"/>
+			<xsd:enumeration value="Internet"/>
+			<xsd:enumeration value="Satellite"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="radioBand.type">
+		<xsd:union memberTypes="av:radioBand.wc.values av:radioBand.vx.values"/>
+	</xsd:simpleType>
+	<!--=============================-=============================-->
+	<!--                    Simple Common Types                    -->
+	<!--=============================-=============================-->
+	<xsd:simpleType name="_id.type">
+		<xsd:restriction base="xsd:string"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="_classNameBase.type">
+		<xsd:restriction base="xsd:NCName"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="_title.type">
+		<xsd:restriction base="xsd:string"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="stateUpdateID.type">
+		<xsd:restriction base="xsd:unsignedInt"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="string.domainNamePrefixed">
+		<xsd:annotation>
+			<xsd:documentation>
+				string.domainNamePrefixed == Domain Name Prefix type
+				This type is defined in ContentDirectory:2 and ScheduledRecording:1 as
+				string.domainNamePrefixed ::= domain-name '_' string
+				Therefore, the only requirement imposed here is the occurrence of at
+				least one underscore that has at least one character before and after it.
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".+_.+"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!--=============================-=============================-->
+	<!--                   Storage Related Types                   -->
+	<!--=============================-=============================-->
+	<xsd:complexType name="storageMedium.type">
+		<xsd:attribute name="val" type="av:storageMedium.values" use="required"/>
+	</xsd:complexType>
+	<xsd:simpleType name="storageMedium.wc.values">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="UNKNOWN"/>
+			<xsd:enumeration value="DV"/>
+			<xsd:enumeration value="MINI-DV"/>
+			<xsd:enumeration value="VHS"/>
+			<xsd:enumeration value="W-VHS"/>
+			<xsd:enumeration value="S-VHS"/>
+			<xsd:enumeration value="D-VHS"/>
+			<xsd:enumeration value="VHSC"/>
+			<xsd:enumeration value="VIDEO8"/>
+			<xsd:enumeration value="HI8"/>
+			<xsd:enumeration value="CD-ROM"/>
+			<xsd:enumeration value="CD-DA"/>
+			<xsd:enumeration value="CD-R"/>
+			<xsd:enumeration value="CD-RW"/>
+			<xsd:enumeration value="VIDEO-CD"/>
+			<xsd:enumeration value="SACD"/>
+			<xsd:enumeration value="MD-AUDIO"/>
+			<xsd:enumeration value="MD-PICTURE"/>
+			<xsd:enumeration value="DVD-ROM"/>
+			<xsd:enumeration value="DVD-VIDEO"/>
+			<xsd:enumeration value="DVD+R"/>
+			<xsd:enumeration value="DVD-R"/>
+			<xsd:enumeration value="DVD+RW"/>
+			<xsd:enumeration value="DVD-RW"/>
+			<xsd:enumeration value="DVD-RAM"/>
+			<xsd:enumeration value="DVD-AUDIO"/>
+			<xsd:enumeration value="DAT"/>
+			<xsd:enumeration value="LD"/>
+			<xsd:enumeration value="HDD"/>
+			<xsd:enumeration value="MICRO-MV"/>
+			<xsd:enumeration value="NETWORK"/>
+			<xsd:enumeration value="NONE"/>
+			<xsd:enumeration value="NOT_IMPLEMENTED"/>
+			<xsd:enumeration value="SD"/>
+			<xsd:enumeration value="PC-CARD"/>
+			<xsd:enumeration value="MMC"/>
+			<xsd:enumeration value="CF"/>
+			<xsd:enumeration value="BD"/>
+			<xsd:enumeration value="MS"/>
+			<xsd:enumeration value="HD_DVD"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="storageMedium.values">
+		<xsd:union memberTypes="av:storageMedium.wc.values av:storageMedium.vx.values"/>
+	</xsd:simpleType>
+	<!--=============================-=============================-->
+	<!--                   Program Related Types                   -->
+	<!--=============================-=============================-->
+	<xsd:simpleType name="SIprogramID.type">
+		<xsd:restriction base="av:csv.4.string.len.1_"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="SIseriesID.type">
+		<xsd:restriction base="av:csv.4.string.len.1_"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="programID_at_type.wc.values">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="SI_PROGRAMID"/>
+			<xsd:enumeration value="SI_SERIESID"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="programID_at_type.values">
+		<xsd:union memberTypes="av:programID_at_type.wc.values av:programID_at_type.vx.values"/>
+	</xsd:simpleType>
+	<xsd:complexType name="programID.type">
+		<xsd:simpleContent>
+			<xsd:extension base="xsd:string">
+				<xsd:attribute name="type" type="av:programID_at_type.values"/>
+			</xsd:extension>
+		</xsd:simpleContent>
+	</xsd:complexType>
+	<xsd:simpleType name="channelID_at_type.wc.values">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="ANALOG"/>
+			<xsd:enumeration value="DIGITAL"/>
+			<xsd:enumeration value="FREQUENCY"/>
+			<xsd:enumeration value="SI"/>
+			<xsd:enumeration value="LINE"/>
+			<xsd:enumeration value="NETWORK"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="channelID_at_type.values">
+		<xsd:union memberTypes="av:channelID_at_type.wc.values av:channelID_at_type.vx.values"/>
+	</xsd:simpleType>
+	<xsd:complexType name="channelID.type">
+		<xsd:simpleContent>
+			<xsd:extension base="xsd:token">
+				<xsd:attribute name="type" type="av:channelID_at_type.values" use="required"/>
+			</xsd:extension>
+		</xsd:simpleContent>
+	</xsd:complexType>
+	<xsd:simpleType name="csv.1_.allowedUse">
+		<xsd:restriction base="xsd:token">
+			<xsd:pattern value="(PLAY|COPY|MOVE|UNKNOWN):(-1|[0-9]+)(,(PLAY|COPY|MOVE|UNKNOWN):(-1|[0-9]+))*"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="programCode.type">
+		<xsd:simpleContent>
+			<xsd:extension base="xsd:token">
+				<xsd:attribute name="type" type="av:programCode_at_type.vd.values"/>
+			</xsd:extension>
+		</xsd:simpleContent>
+	</xsd:complexType>
+	<xsd:simpleType name="rating_at_type.wc.values">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="MPAA.ORG"/>
+			<xsd:enumeration value="RIAA.ORG"/>
+			<xsd:enumeration value="ESRB.ORG"/>
+			<xsd:enumeration value="TVGUIDELINES.ORG"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="rating_at_type.values">
+		<xsd:union memberTypes="av:rating_at_type.wc.values av:rating_at_type.vx.values"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="rating.MPAA.ORG.values">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="G"/>
+			<xsd:enumeration value="PG"/>
+			<xsd:enumeration value="R"/>
+			<xsd:enumeration value="PG-13"/>
+			<xsd:enumeration value="R"/>
+			<xsd:enumeration value="NC-17"/>
+			<xsd:enumeration value="NR"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="rating.RIIA.ORG.values">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value=""/>
+			<xsd:enumeration value="PA-EC"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="rating.ESRB.ORG.values">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="EC"/>
+			<xsd:enumeration value="E"/>
+			<xsd:enumeration value="E10+"/>
+			<xsd:enumeration value="T"/>
+			<xsd:enumeration value="M"/>
+			<xsd:enumeration value="AO"/>
+			<xsd:enumeration value="RP"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="rating.TVGUIDELINES.ORG.values">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="TV-Y"/>
+			<xsd:enumeration value="TV-Y7"/>
+			<xsd:enumeration value="TV-Y7FV"/>
+			<xsd:enumeration value="TV-G"/>
+			<xsd:enumeration value="TV-PG"/>
+			<xsd:enumeration value="TV-14"/>
+			<xsd:enumeration value="TV-MA"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="rating.wc.values">
+		<xsd:union memberTypes="av:rating.MPAA.ORG.values av:rating.RIIA.ORG.values av:rating.ESRB.ORG.values av:rating.TVGUIDELINES.ORG.values"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="rating.values">
+		<xsd:union memberTypes="av:rating.wc.values av:rating.vx.values"/>
+	</xsd:simpleType>
+	<xsd:complexType name="rating.type">
+		<xsd:simpleContent>
+			<xsd:extension base="av:rating.values">
+				<xsd:attribute name="type" type="av:rating_at_type.values"/>
+				<xsd:attribute name="advice" type="xsd:string"/>
+				<xsd:attribute name="equivalentAge" type="xsd:string"/>
+			</xsd:extension>
+		</xsd:simpleContent>
+	</xsd:complexType>
+	<xsd:simpleType name="FIRST-RUN.or.REPEAT">
+		<xsd:union memberTypes="av:string.const.FIRST-RUN av:string.const.REPEAT"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="ALL.or.FIRST-RUN.or.REPEAT">
+		<xsd:union memberTypes="av:string.const.ALL av:string.const.FIRST-RUN av:string.const.REPEAT"/>
+	</xsd:simpleType>
+	<!--=============================-=============================-->
+	<!--          User Channel and EPG Related Properties          -->
+	<!--=============================-=============================-->
+	<xsd:complexType name="channelGroupName.type">
+		<xsd:simpleContent>
+			<xsd:extension base="xsd:string">
+				<xsd:attribute name="id" type="av:string.domainNamePrefixed"/>
+			</xsd:extension>
+		</xsd:simpleContent>
+	</xsd:complexType>
+	<xsd:simpleType name="stationCallSign.type">
+		<xsd:restriction base="xsd:string"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="signalStrength.wc.type">
+		<xsd:restriction base="xsd:int">
+			<xsd:minInclusive value="-1"/>
+			<xsd:maxInclusive value="100"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="signalStrength.type">
+		<xsd:union memberTypes="av:signalStrength.wc.type av:signalStrength.vx.type"/>
+	</xsd:simpleType>
+	<!--=============================-=============================-->
+	<!--                Bookmark Related Properties                -->
+	<!--=============================-=============================-->
+	<xsd:simpleType name="serviceType">
+		<xsd:restriction base="xsd:token">
+			<xsd:pattern value="[^#:]{1,64}:[1-9][0-9]*"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="serviceId">
+		<xsd:restriction base="xsd:token">
+			<xsd:pattern value="[^:]{1,64}"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="deviceUDN.type">
+		<xsd:simpleContent>
+			<xsd:extension base="av:UDN">
+				<xsd:attribute name="serviceType" type="av:serviceType" use="required"/>
+				<xsd:attribute name="serviceId" type="av:serviceId" use="required"/>
+			</xsd:extension>
+		</xsd:simpleContent>
+	</xsd:complexType>
+	<!--=================================-=================================-->
+	<!--                                                                   -->
+	<!--                    Extension Master Datatypes                     -->
+	<!--                                                                   -->
+	<!--=================================-=================================-->
+	<xsd:simpleType name="extensions.simpleType.none">
+		<xsd:annotation>
+			<xsd:documentation xml:lang="en">
+				Use this type wherever extensions to a simpleType are allowed by the specification,
+				but they are disallowed for testing validation purposes.
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:NCName">
+			<xsd:pattern value="[:]+"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:group name="extensions.elementType.none">
+		<xsd:annotation>
+			<xsd:documentation xml:lang="en">
+				Use this group wherever element extensions are allowed by the specification,
+				but they are disallowed for testing validation purposes.
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:choice>
+			<xsd:any minOccurs="0" maxOccurs="0"/>
+		</xsd:choice>
+	</xsd:group>
+	<xsd:attributeGroup name="extensions.attributes.none">
+		<xsd:annotation>
+			<xsd:documentation xml:lang="en">
+				Use this group wherever attribute extensions are allowed by the specification,
+				but they are disallowed for testing validation purposes.
+			</xsd:documentation>
+		</xsd:annotation>
+	</xsd:attributeGroup>
+	<xsd:simpleType name="extensions.simpleType.any">
+		<xsd:annotation>
+			<xsd:documentation xml:lang="en">
+				Use this type wherever extensions to a simpleType are allowed by the specification,
+				and no constraints are imposed for testing validation purposes.
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:union memberTypes="xsd:duration xsd:date xsd:dateTime xsd:time xsd:gDay xsd:gMonth xsd:gMonthDay xsd:gYear xsd:gYearMonth xsd:boolean xsd:float xsd:decimal xsd:double xsd:anyURI xsd:QName xsd:string xsd:base64Binary xsd:hexBinary"/>
+	</xsd:simpleType>
+	<xsd:group name="extensions.elementType.any">
+		<xsd:annotation>
+			<xsd:documentation xml:lang="en">
+				Use this group wherever element extensions are allowed by the specification,
+				and no constraints are imposed for testing validation purposes.
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:choice>
+			<xsd:any minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:choice>
+	</xsd:group>
+	<xsd:attributeGroup name="extensions.attributes.any">
+		<xsd:annotation>
+			<xsd:documentation xml:lang="en">
+				Use this group wherever attribute extensions are allowed by the specification,
+				and no constraints are imposed for testing validation purposes.
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:anyAttribute/>
+	</xsd:attributeGroup>
+	<!--===================================================================-->
+	<!--                                                                   -->
+	<!--                   Extension Component Datatypes                   -->
+	<!--                                                                   -->
+	<!--===================================================================-->
+	<xsd:simpleType name="storageMedium.vx.values">
+		<xsd:restriction base="av:extensions.simpleType.any"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="programID_at_type.vx.values">
+		<xsd:restriction base="av:domainName"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="channelID_at_type.vx.values">
+		<xsd:restriction base="xsd:token"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="rating_at_type.vx.values">
+		<xsd:restriction base="av:string.domainNamePrefixed"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="rating.vx.values">
+		<xsd:restriction base="xsd:string"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="radioBand.vx.values">
+		<xsd:restriction base="xsd:token"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="signalStrength.vx.type">
+		<xsd:restriction base="xsd:int"/>
+	</xsd:simpleType>
+	<!--===================================================================-->
+	<!--                                                                   -->
+	<!--                Vendor-Defined Component Datatypes                 -->
+	<!--                                                                   -->
+	<!--===================================================================-->
+	<xsd:simpleType name="didl-lite_COLON_at_id.vd.type">
+		<xsd:restriction base="av:_id.type"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="srs_COLON_at_id.vd.type">
+		<xsd:restriction base="av:_id.type"/>
+	</xsd:simpleType>
+	<xsd:simpleType name="programCode_at_type.vd.values">
+		<xsd:restriction base="av:string.domainNamePrefixed"/>
+	</xsd:simpleType>
+</xsd:schema>
