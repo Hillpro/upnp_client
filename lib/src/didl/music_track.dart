@@ -17,6 +17,11 @@ class MusicTrack {
   final Duration duration;
   final String? artUri;
 
+  /// Defaults to a fully wildcarded `http-get` entry. Renderers that match
+  /// strictly on content format do better with a concrete MIME type, e.g.
+  /// `http-get:*:audio/mpeg:*`. REQUIRED
+  final String protocolInfo;
+
   const MusicTrack({
     required this.id,
     required this.uri,
@@ -25,6 +30,7 @@ class MusicTrack {
     required this.album,
     required this.duration,
     required this.artUri,
+    this.protocolInfo = 'http-get:*:*:*',
   });
 
   String toXml() {
@@ -43,12 +49,13 @@ class MusicTrack {
           'item',
           attributes: {'id': id, 'parentID': '', 'restricted': '1'},
           nest: () {
+            // didl-lite.xsd item.type requires dc:title first, then upnp:class.
+            builder.element('title', namespace: _dcNamespace, nest: title);
             builder.element(
               'class',
               namespace: _upnpNamespace,
               nest: 'object.item.audioItem.musicTrack',
             );
-            builder.element('title', namespace: _dcNamespace, nest: title);
             builder.element('artist', namespace: _upnpNamespace, nest: artist);
             builder.element('album', namespace: _upnpNamespace, nest: album);
             builder.element(
@@ -58,7 +65,10 @@ class MusicTrack {
             );
             builder.element(
               'res',
-              attributes: {'duration': durationToHHMMSS(duration)},
+              attributes: {
+                'protocolInfo': protocolInfo,
+                'duration': durationToHHMMSS(duration),
+              },
               nest: uri,
             );
           },
@@ -79,5 +89,6 @@ class MusicTrack {
     'artist': artist,
     'album': album,
     'duration': duration,
+    'protocolInfo': protocolInfo,
   };
 }
