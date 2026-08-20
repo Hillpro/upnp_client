@@ -4,6 +4,9 @@ import 'package:collection/collection.dart';
 
 /// An UPnP AVTransport service
 /// https://upnp.org/specs/av/UPnP-av-AVTransport-v1-Service.pdf
+///
+/// UDA 1.1 §3.2.1 - `in` arguments are sent in the order the SCPD declares
+/// them, so the order of the maps below is significant and must not change.
 class AvTransportService extends Service {
   AvTransportService.fromXml(super.device, super.xml) : super.fromXml();
 
@@ -13,9 +16,9 @@ class AvTransportService extends Service {
     int instanceId = 0,
   }) async {
     await invokeAction('SetAVTransportURI', {
+      'InstanceID': instanceId,
       'CurrentURI': uri,
       'CurrentURIMetaData': metadata,
-      'InstanceID': instanceId,
     });
   }
 
@@ -25,9 +28,9 @@ class AvTransportService extends Service {
     int instanceId = 0,
   }) async {
     await invokeAction('SetNextAVTransportURI', {
+      'InstanceID': instanceId,
       'NextURI': uri,
       'NextURIMetaData': metadata,
-      'InstanceID': instanceId,
     });
   }
 
