@@ -12,17 +12,21 @@ jobs:
       id-token: write # Required for authentication using OIDC
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       - uses: dart-lang/setup-dart@v1
       - name: Install dependencies
         run: dart pub get
+
+      # Verify, never rewrite. Anything that mutates the checkout here would
+      # publish bytes that no longer match the tag, unreviewed and untested.
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+      - name: Analyze
+        run: dart analyze
+      - name: Run tests
+        run: dart test
+
       - name: Publish - dry run
         run: dart pub publish --dry-run
-      - name: Fix Check
-        run: dart fix --dry-run
-      - name: Fix Apply
-        run: dart fix --apply
-      - name: Format
-        run: dart format .
       - name: Publish
         run: dart pub publish --force

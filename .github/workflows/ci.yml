@@ -1,0 +1,44 @@
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 'stable' catches new lints; the lower bound proves the SDK constraint
+        # declared in pubspec.yaml is actually usable.
+        sdk: [3.8.0, stable]
+    name: Dart ${{ matrix.sdk }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ matrix.sdk }}
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Analyze
+        run: dart analyze
+
+      - name: Run tests
+        run: dart test
+
+      # The formatter ships with the SDK and its output changes between
+      # versions, so pin these checks to one SDK to avoid spurious failures.
+      - name: Verify formatting
+        if: matrix.sdk == 'stable'
+        run: dart format --output=none --set-exit-if-changed .
+
+      # Guards against packaging regressions, e.g. spec files leaking in.
+      - name: Validate package
+        if: matrix.sdk == 'stable'
+        run: dart pub publish --dry-run
