@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## 1.2.1
+## 1.2.2
 
 - **FIX**: `Device` equality and hashCode disagreed when one device had a UDN and the other did not (UDA 1.1 §2.3)
 
