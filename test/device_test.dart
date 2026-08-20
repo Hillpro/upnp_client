@@ -13,6 +13,16 @@ Device parseDevice({String? url, String? urlBase}) {
   );
 }
 
+/// Builds a device with an optional raw UDN and location url.
+Device udnDevice(String? udn, String? url) => Device.fromXml(
+  XmlDocument.parse(
+    udn == null
+        ? '<device><friendlyName>x</friendlyName></device>'
+        : '<device><UDN>$udn</UDN></device>',
+  ).rootElement,
+  url,
+);
+
 void main() {
   group('Device.fromXml', () {
     test('rejects XML that is not a <device>', () {
@@ -116,6 +126,54 @@ void main() {
       expect(bare('http://a/'), bare('http://a/'));
       expect(bare('http://a/').hashCode, bare('http://a/').hashCode);
       expect(bare('http://a/'), isNot(bare('http://b/')));
+    });
+
+    test('a device with a UDN never equals one without', () {
+      // == used to fall through to the url when only one side had a UDN,
+      // returning true while the hash codes differed.
+      const url = 'http://192.168.1.50/d.xml';
+      final withUdn = udnDevice('uuid:abc', url);
+      final withoutUdn = udnDevice(null, url);
+      expect(withUdn, isNot(withoutUdn));
+      expect(
+        [withoutUdn].contains(withUdn),
+        {withoutUdn}.contains(withUdn),
+        reason: 'List and Set must agree',
+      );
+    });
+
+    test('a UDN is never confused with a url', () {
+      // UDA 1.1 §1.1.4 requires control points to accept malformed UUIDs, so a
+      // UDN may itself look like a url. The identity kinds must stay disjoint.
+      const url = 'http://192.168.1.50/d.xml';
+      expect(udnDevice(url, 'http://other/'), isNot(udnDevice(null, url)));
+    });
+
+    test('devices with neither UDN nor url are never equal', () {
+      expect(udnDevice(null, null), isNot(udnDevice(null, null)));
+    });
+
+    test('== implies equal hashCodes across every identity combination', () {
+      const a = 'http://a/', b = 'http://b/';
+      final devices = [
+        udnDevice('uuid:one', a),
+        udnDevice('uuid:one', b),
+        udnDevice('uuid:two', a),
+        udnDevice(null, a),
+        udnDevice(null, b),
+        udnDevice(null, null),
+      ];
+      for (final x in devices) {
+        for (final y in devices) {
+          if (x == y) {
+            expect(
+              x.hashCode,
+              y.hashCode,
+              reason: 'equal devices must share a hashCode',
+            );
+          }
+        }
+      }
     });
 
     test('a device is never equal to a non-device', () {

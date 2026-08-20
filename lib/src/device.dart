@@ -73,23 +73,33 @@ class Device {
     'devices': devices,
   };
 
+  /// The key this device is identified by, tagged with its kind.
+  ///
+  /// UDA 1.1 §2.3 - UDN is REQUIRED, universally unique and MUST survive
+  /// reboots, so it is the only sound identity. Some devices omit it, so the
+  /// LOCATION URL serves as a fallback; that is adequate within one subnet,
+  /// but private IPs repeat across subnets and Dart exposes no per-interface
+  /// socket metadata to tell them apart.
+  ///
+  /// The kind tag keeps the two namespaces disjoint: §1.1.4 requires control
+  /// points to accept malformed UUIDs, so a UDN may itself look like a URL.
+  ({String kind, String value})? get _identity {
+    final uuid = description?.uuid;
+    if (uuid != null) return (kind: 'uuid', value: uuid);
+    final location = url;
+    return location == null ? null : (kind: 'url', value: location);
+  }
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is! Device) return false;
-    final thisUuid = description?.uuid;
-    final otherUuid = other.description?.uuid;
-    if (thisUuid != null && otherUuid != null) return thisUuid == otherUuid;
-
-    // UDN is required by spec but some real-world devices omit it.
-    // Fall back to LOCATION URL — sufficient within a single subnet;
-    // private IP collisions across subnets are not distinguishable without
-    // per-interface socket metadata that Dart does not expose.
-    return url != null && url == other.url;
+    final identity = _identity;
+    return identity != null && identity == other._identity;
   }
 
   @override
-  int get hashCode => description?.uuid?.hashCode ?? url.hashCode;
+  int get hashCode => _identity.hashCode;
 }
 
 /// The general information about this UPnP device
