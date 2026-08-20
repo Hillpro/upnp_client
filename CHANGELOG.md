@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.1
+
+- **FIX**: Check the HTTP status before parsing device and service descriptions (UDA 1.1 §2.11)
+
+
 ## 1.1.0
 
 - **FEAT**: New `MusicTrack.protocolInfo` for the required `res@protocolInfo` attribute
