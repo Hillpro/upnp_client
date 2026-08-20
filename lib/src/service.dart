@@ -83,15 +83,23 @@ class Service {
     final httpClient = HttpClient();
     httpClient.connectionTimeout = _actionTimeout;
     try {
-      final HttpClientRequest request = await httpClient.getUrl(
-        _resolveUrl(url!),
-      );
+      final Uri descriptionUrl = _resolveUrl(url!);
+      final HttpClientRequest request = await httpClient.getUrl(descriptionUrl);
       final HttpClientResponse response = await request.close().timeout(
         _actionTimeout,
       );
-      final XmlElement serviceDescXml = XmlDocument.parse(
-        await response.transform(utf8.decoder).join(),
-      ).rootElement;
+      final String body = await response.transform(utf8.decoder).join();
+
+      // UDA 1.1 §2.11 defines the description response as "200 OK";
+      // anything else is an error page rather than XML.
+      if (response.statusCode != 200) {
+        throw Exception(
+          'ERROR: Service description request failed with status '
+          '${response.statusCode}: $descriptionUrl',
+        );
+      }
+
+      final XmlElement serviceDescXml = XmlDocument.parse(body).rootElement;
       return ServiceDescription.fromXml(this, serviceDescXml);
     } finally {
       httpClient.close();

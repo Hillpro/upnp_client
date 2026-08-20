@@ -128,9 +128,18 @@ class DeviceDiscoverer {
 
       final request = await httpClient.getUrl(locationUri);
       final response = await request.close().timeout(_descriptionTimeout);
-      final rootElement = XmlDocument.parse(
-        await response.transform(utf8.decoder).join(),
-      ).rootElement;
+      final body = await response.transform(utf8.decoder).join();
+
+      // UDA 1.1 §2.11 defines the description response as "200 OK";
+      // anything else is an error page rather than XML.
+      if (response.statusCode != 200) {
+        throw Exception(
+          'ERROR: Device description request failed with status '
+          '${response.statusCode}: $location',
+        );
+      }
+
+      final rootElement = XmlDocument.parse(body).rootElement;
       final urlBase = rootElement.getElement('URLBase')?.innerText;
       final deviceXml = rootElement.getElement('device');
 
