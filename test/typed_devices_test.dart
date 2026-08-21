@@ -198,12 +198,16 @@ void main() {
       expect(twoLinks.connections, hasLength(2));
       expect(twoLinks.connections.first, isA<WanIpConnectionService>());
       expect(twoLinks.connections.last, isA<WanPppConnectionService>());
+      // Hoisted rather than inline: formatter versions disagree on whether to
+      // hug a collection literal that is followed by another argument, so an
+      // inline list here formats differently on different SDKs.
+      const expectedUdns = [
+        'uuid:22222222-2222-2222-2222-222222222222',
+        'uuid:33333333-3333-3333-3333-333333333333',
+      ];
       expect(
         twoLinks.connections.map((c) => c.device.description!.udn),
-        [
-          'uuid:22222222-2222-2222-2222-222222222222',
-          'uuid:33333333-3333-3333-3333-333333333333',
-        ],
+        expectedUdns,
         reason: 'each connection stays attributable to its own link',
       );
     });
