@@ -94,7 +94,12 @@ void main() {
       'http://192.168.1.50:8080/base/',
       reason: 'URLBase in the description wins over LOCATION',
     );
-    expect(device.avTransportService(), isNotNull);
+    expect(
+      device,
+      isA<MediaRenderer>(),
+      reason: 'discovery builds the typed profile',
+    );
+    expect((device as MediaRenderer).avTransport, isNotNull);
   });
 
   test('reports an error when the description fetch fails', () async {
@@ -119,14 +124,28 @@ void main() {
   });
 
   group('ignores', () {
-    /// Sends [payload], then a known-good response, and asserts the first
-    /// device to arrive came from the good one.
+    /// Sends [payload] and asserts that no device results from it.
+    ///
+    /// This deliberately does not follow up with a known-good response as a
+    /// fence. Datagrams sent back to back are dropped outright when the event
+    /// loop is busy - a probe sending three while blocked receives one, and
+    /// the rest are gone from the buffer rather than merely unread - so the
+    /// fence itself was what went missing, and the test hung waiting for a
+    /// device that had never been delivered. Invisible locally, intermittent
+    /// on a loaded runner.
     Future<void> expectIgnored(String payload) async {
-      final discovered = discoverer.devices.first;
+      final seen = <Device>[];
+      final subscription = discoverer.devices.listen(seen.add);
       await sendSsdp(payload);
-      await sendSsdp(searchResponse());
-      final device = await discovered.timeout(const Duration(seconds: 10));
-      expect(device.url, location());
+      // Comfortably longer than a description fetch against the loopback
+      // server, so a regression that started fetching would still be caught.
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      await subscription.cancel();
+      expect(
+        seen,
+        isEmpty,
+        reason: 'a malformed search response must not yield a device',
+      );
     }
 
     test(

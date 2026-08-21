@@ -7,6 +7,17 @@ import 'dart:typed_data';
 /// that MUST still be accepted when received from older devices.
 bool parseUpnpBool(String? value) => const {'1', 'true', 'yes'}.contains(value);
 
+/// Parses a `ui4` count of seconds into a [Duration].
+///
+/// Distinct from [parseUpnpTime]: several IGD state variables carry a plain
+/// seconds count with Eng. Units "seconds" (WANIPConnection:1 §2.2) rather
+/// than a `time` string. Returns null when the value is absent or not an
+/// integer, which a compliant device never sends.
+Duration? parseUpnpSeconds(String? value) {
+  final seconds = int.tryParse(value ?? '');
+  return seconds == null ? null : Duration(seconds: seconds);
+}
+
 /// Parses a UPnP time or time.tz string per UDA 1.1 §2.3.9.
 ///
 /// Format is HH:MM:SS[.fraction][±HH:MM|Z]. Dart has no native time-of-day

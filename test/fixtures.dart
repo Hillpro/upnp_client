@@ -74,6 +74,62 @@ const deviceDescriptionXml = '''
 </root>
 ''';
 
+/// An InternetGatewayDevice description, nesting the WAN connection service
+/// two `deviceList` levels down as IGD:1 §2.2 requires. The root device holds
+/// no connection service, which is the point.
+const igdDescriptionXml = '''
+<?xml version="1.0"?>
+<root xmlns="urn:schemas-upnp-org:device-1-0">
+  <specVersion><major>1</major><minor>0</minor></specVersion>
+  <device>
+    <deviceType>urn:schemas-upnp-org:device:InternetGatewayDevice:1</deviceType>
+    <friendlyName>Gateway</friendlyName>
+    <UDN>uuid:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee</UDN>
+    <serviceList>
+      <service>
+        <serviceType>urn:schemas-upnp-org:service:Layer3Forwarding:1</serviceType>
+        <serviceId>urn:upnp-org:serviceId:L3Forwarding1</serviceId>
+        <SCPDURL>L3F.xml</SCPDURL>
+        <controlURL>L3F/control</controlURL>
+        <eventSubURL>L3F/event</eventSubURL>
+      </service>
+    </serviceList>
+    <deviceList>
+      <device>
+        <deviceType>urn:schemas-upnp-org:device:WANDevice:1</deviceType>
+        <friendlyName>WAN Device</friendlyName>
+        <UDN>uuid:11111111-1111-1111-1111-111111111111</UDN>
+        <serviceList>
+          <service>
+            <serviceType>urn:schemas-upnp-org:service:WANCommonInterfaceConfig:1</serviceType>
+            <serviceId>urn:upnp-org:serviceId:WANCommonIFC1</serviceId>
+            <SCPDURL>WANCommonIFC.xml</SCPDURL>
+            <controlURL>WANCommonIFC/control</controlURL>
+            <eventSubURL>WANCommonIFC/event</eventSubURL>
+          </service>
+        </serviceList>
+        <deviceList>
+          <device>
+            <deviceType>urn:schemas-upnp-org:device:WANConnectionDevice:1</deviceType>
+            <friendlyName>WAN Connection Device</friendlyName>
+            <UDN>uuid:22222222-2222-2222-2222-222222222222</UDN>
+            <serviceList>
+              <service>
+                <serviceType>urn:schemas-upnp-org:service:WANIPConnection:1</serviceType>
+                <serviceId>urn:upnp-org:serviceId:WANIPConn1</serviceId>
+                <SCPDURL>WANIPConn.xml</SCPDURL>
+                <controlURL>WANIPConn/control</controlURL>
+                <eventSubURL>WANIPConn/event</eventSubURL>
+              </service>
+            </serviceList>
+          </device>
+        </deviceList>
+      </device>
+    </deviceList>
+  </device>
+</root>
+''';
+
 /// An SCPD with one action and two state variables.
 const scpdXml = '''
 <?xml version="1.0"?>

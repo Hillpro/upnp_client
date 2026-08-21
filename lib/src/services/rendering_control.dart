@@ -1,5 +1,5 @@
-import 'package:upnp_client/src/data_type_parsers.dart';
 import 'package:upnp_client/src/service.dart';
+import 'package:upnp_client/src/types/data_type_parsers.dart';
 
 /// An UPnP RenderingControl service
 /// https://upnp.org/specs/av/UPnP-av-RenderingControl-v1-Service.pdf

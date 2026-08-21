@@ -1,7 +1,7 @@
 import 'package:collection/collection.dart';
-import 'package:upnp_client/src/diagnostics.dart';
-import 'package:upnp_client/src/xml_utils.dart';
 import 'package:upnp_client/src/service.dart';
+import 'package:upnp_client/src/utils/diagnostics.dart';
+import 'package:upnp_client/src/utils/xml_utils.dart';
 import 'package:xml/xml.dart';
 
 /// An UPnP Action

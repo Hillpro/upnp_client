@@ -144,7 +144,7 @@ class DeviceDiscoverer {
       final deviceXml = rootElement.getElement('device');
 
       if (deviceXml != null) {
-        _devices.add(Device.fromXml(deviceXml, location, urlBase));
+        _devices.add(Device.fromXmlTyped(deviceXml, location, urlBase));
       }
     } on Exception catch (e, st) {
       _errors.addError(e, st);

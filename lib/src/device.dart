@@ -1,11 +1,16 @@
-import 'package:upnp_client/src/diagnostics.dart';
-import 'package:upnp_client/src/service.dart';
-import 'package:upnp_client/src/xml_utils.dart';
-import 'package:xml/xml.dart';
 import 'package:collection/collection.dart';
-import 'package:upnp_client/src/common_services/rendering_control.dart';
-import 'package:upnp_client/src/common_services/connection_manager.dart';
-import 'package:upnp_client/src/common_services/av_transport.dart';
+import 'package:upnp_client/src/devices/internet_gateway.dart';
+import 'package:upnp_client/src/devices/media_renderer.dart';
+import 'package:upnp_client/src/devices/media_server.dart';
+import 'package:upnp_client/src/services/av_transport.dart';
+import 'package:upnp_client/src/services/connection_manager.dart';
+import 'package:upnp_client/src/services/rendering_control.dart';
+import 'package:upnp_client/src/service.dart';
+import 'package:upnp_client/src/types/upnp_device_type.dart';
+import 'package:upnp_client/src/types/upnp_service_type.dart';
+import 'package:upnp_client/src/utils/diagnostics.dart';
+import 'package:upnp_client/src/utils/xml_utils.dart';
+import 'package:xml/xml.dart';
 
 /// An UPnP device
 class Device {
@@ -31,6 +36,34 @@ class Device {
   /// The list of embedded devices
   List<Device> devices = [];
 
+  /// Builds a [Device], returning the subclass matching its `deviceType`.
+  ///
+  /// An unrecognised profile yields a plain [Device]. Embedded devices are
+  /// always typed, whichever constructor built their parent.
+  static Device fromXmlTyped(XmlElement xml, [String? url, String? urlBase]) =>
+      switch (UpnpDeviceType.tryParse(
+        xml.getElement('deviceType')?.innerText,
+      )) {
+        UpnpDeviceType.internetGatewayDevice => InternetGatewayDevice.fromXml(
+          xml,
+          url,
+          urlBase,
+        ),
+        UpnpDeviceType.wanDevice => WanDevice.fromXml(xml, url, urlBase),
+        UpnpDeviceType.wanConnectionDevice => WanConnectionDevice.fromXml(
+          xml,
+          url,
+          urlBase,
+        ),
+        UpnpDeviceType.mediaRenderer => MediaRenderer.fromXml(
+          xml,
+          url,
+          urlBase,
+        ),
+        UpnpDeviceType.mediaServer => MediaServer.fromXml(xml, url, urlBase),
+        null => Device.fromXml(xml, url, urlBase),
+      };
+
   Device.fromXml(this.xml, [this.url, this.urlBase]) {
     if (xml.name.toString() != 'device') {
       throw Exception('ERROR: Invalid Device XML!\n$xml');
@@ -46,18 +79,80 @@ class Device {
     );
     devices = xml.loadList(
       'deviceList',
-      (xml) => Device.fromXml(xml, null, urlBase),
+      (xml) => Device.fromXmlTyped(xml, null, urlBase),
     );
   }
 
+  /// The RenderingControl service on this device, if it has exactly one.
+  ///
+  /// Deprecated: use [MediaRenderer.renderingControl]. Behaviour is unchanged.
+  @Deprecated('Use MediaRenderer.renderingControl')
   RenderingControlService? renderingControlService() =>
       services.whereType<RenderingControlService>().singleOrNull;
 
+  /// The ConnectionManager service on this device, if it has exactly one.
+  ///
+  /// Deprecated: use [MediaRenderer.connectionManager] or
+  /// [MediaServer.connectionManager]. Behaviour is unchanged.
+  @Deprecated(
+    'Use MediaRenderer.connectionManager or MediaServer.connectionManager',
+  )
   ConnectionManagerService? connectionManagerService() =>
       services.whereType<ConnectionManagerService>().singleOrNull;
 
+  /// The AVTransport service on this device, if it has exactly one.
+  ///
+  /// Deprecated: playback belongs to a device profile, not to every device.
+  /// Use [MediaRenderer.avTransport] (or [MediaServer.avTransport], where the
+  /// transfer protocol requires one) after obtaining the device through
+  /// [Device.fromXmlTyped].
+  ///
+  /// Behaviour is unchanged: this device's own [services] only, and null when
+  /// there is no single match.
+  @Deprecated('Use MediaRenderer.avTransport or MediaServer.avTransport')
   AvTransportService? avTransportService() =>
       services.whereType<AvTransportService>().singleOrNull;
+
+  /// Every service in this device's subtree, depth first: this device's own
+  /// [services], then those of each embedded device in turn.
+  ///
+  /// A device profile decides how deep its services sit. The AV profiles put
+  /// theirs on the root device, so [services] alone is enough to find them.
+  /// IGD does not: it nests the WAN connection services two `deviceList`
+  /// levels down, under `WANDevice` then `WANConnectionDevice`, so a lookup
+  /// limited to [services] finds nothing on a gateway.
+  Iterable<Service> get allServices =>
+      services.followedBy(devices.expand((device) => device.allServices));
+
+  /// This device's own service of [type], or null if it advertises none.
+  ///
+  /// Matches on the UPnP service type rather than a Dart type, which is how to
+  /// reach a service with no typed wrapper. Scoped to [services], like the
+  /// profile accessors and unlike [findService]:
+  ///
+  /// ```dart
+  /// gateway.serviceOfType(UpnpServiceType.layer3Forwarding);
+  /// ```
+  Service? serviceOfType(UpnpServiceType type) =>
+      services.firstWhereOrNull((service) => service.standardType == type);
+
+  /// The first service of type [T] in this device's subtree, or null if the
+  /// subtree holds none.
+  ///
+  /// The only lookup here that leaves this device: [serviceOfType] and the
+  /// profile accessors on the typed devices all read [services] alone.
+  T? findService<T extends Service>() => allServices.whereType<T>().firstOrNull;
+
+  /// Every service of type [T] in this device's subtree, in [allServices]
+  /// order.
+  ///
+  /// A subtree may legitimately hold several services of one type. A gateway
+  /// is the standing example: WANConnectionDevice:1 §2.2 allows multiple
+  /// connection services within one `WANConnectionDevice`, and WANDevice:1
+  /// §2.2 allows multiple `WANConnectionDevice` instances within a
+  /// `WANDevice`.
+  List<T> findServices<T extends Service>() =>
+      allServices.whereType<T>().toList();
 
   @override
   String toString() =>

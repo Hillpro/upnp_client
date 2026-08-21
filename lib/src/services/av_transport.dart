@@ -1,6 +1,6 @@
-import 'package:upnp_client/src/diagnostics.dart';
-import 'package:upnp_client/src/service.dart';
 import 'package:collection/collection.dart';
+import 'package:upnp_client/src/service.dart';
+import 'package:upnp_client/src/utils/diagnostics.dart';
 
 /// An UPnP AVTransport service
 /// https://upnp.org/specs/av/UPnP-av-AVTransport-v1-Service.pdf

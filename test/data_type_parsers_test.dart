@@ -1,10 +1,30 @@
 import 'dart:convert';
 
 import 'package:test/test.dart';
-import 'package:upnp_client/src/data_type.dart';
-import 'package:upnp_client/src/data_type_parsers.dart';
+import 'package:upnp_client/src/types/data_type.dart';
+import 'package:upnp_client/src/types/data_type_parsers.dart';
 
 void main() {
+  group('parseUpnpSeconds', () {
+    test('reads a seconds count as a Duration', () {
+      expect(parseUpnpSeconds('0'), Duration.zero);
+      expect(parseUpnpSeconds('3661'), const Duration(seconds: 3661));
+    });
+
+    test('is null for a missing or non-integer value', () {
+      expect(parseUpnpSeconds(null), isNull);
+      expect(parseUpnpSeconds(''), isNull);
+      expect(parseUpnpSeconds('1.5'), isNull);
+      expect(parseUpnpSeconds('soon'), isNull);
+    });
+
+    test('distinguishes zero from absent', () {
+      // A permanent port mapping reports 0; both must not read alike.
+      expect(parseUpnpSeconds('0'), isNotNull);
+      expect(parseUpnpSeconds(null), isNull);
+    });
+  });
+
   group('parseUpnpBool', () {
     test('accepts the canonical UDA 1.1 value', () {
       expect(parseUpnpBool('1'), isTrue);

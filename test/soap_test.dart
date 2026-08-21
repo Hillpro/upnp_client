@@ -34,7 +34,7 @@ void main() {
   late HttpServer server;
   late List<Captured> seen;
   late Responder respond;
-  late Device device;
+  late MediaRenderer device;
 
   setUp(() async {
     seen = [];
@@ -56,7 +56,9 @@ void main() {
 
     final base = 'http://${server.address.address}:${server.port}/base/';
     final root = XmlDocument.parse(deviceDescriptionXml).rootElement;
-    device = Device.fromXml(root.getElement('device')!, base, base);
+    device =
+        Device.fromXmlTyped(root.getElement('device')!, base, base)
+            as MediaRenderer;
   });
 
   tearDown(() => server.close(force: true));
@@ -89,7 +91,7 @@ void main() {
 
     test('sends in arguments in SCPD order', () async {
       // Regression: InstanceID was sent last, violating UDA 1.1 §3.2.1.
-      await device.avTransportService()!.setAVTransportURI(
+      await device.avTransport!.setAVTransportURI(
         'http://host/a.mp3',
         metadata: '<didl/>',
       );
@@ -109,7 +111,7 @@ void main() {
     });
 
     test('sets SOAPACTION and the SOAP content type', () async {
-      await device.avTransportService()!.setAVTransportURI('http://host/a.mp3');
+      await device.avTransport!.setAVTransportURI('http://host/a.mp3');
       expect(
         seen.single.soapAction,
         '"urn:schemas-upnp-org:service:AVTransport:1#SetAVTransportURI"',
@@ -120,7 +122,7 @@ void main() {
     });
 
     test('resolves a relative controlURL against urlBase', () async {
-      await device.avTransportService()!.setAVTransportURI('http://host/a.mp3');
+      await device.avTransport!.setAVTransportURI('http://host/a.mp3');
       expect(seen.single.path, '/base/AVTransport/control');
     });
 
@@ -131,7 +133,7 @@ void main() {
           '<u:GetVolumeResponse xmlns:u="$_rcsNs"><CurrentVolume>7</CurrentVolume></u:GetVolumeResponse>',
         ),
       );
-      await device.renderingControlService()!.getVolume();
+      await device.renderingControl!.getVolume();
       expect(seen.single.path, '/abs/RenderingControl/control');
     });
   });
@@ -144,7 +146,7 @@ void main() {
           '<u:GetVolumeResponse xmlns:u="$_rcsNs"><CurrentVolume>42</CurrentVolume></u:GetVolumeResponse>',
         ),
       );
-      expect(await device.renderingControlService()!.getVolume(), 42);
+      expect(await device.renderingControl!.getVolume(), 42);
     });
 
     test('accepts deprecated boolean spellings from UPnP 1.0 devices', () async {
@@ -155,11 +157,7 @@ void main() {
             '<u:GetMuteResponse xmlns:u="$_rcsNs"><CurrentMute>$raw</CurrentMute></u:GetMuteResponse>',
           ),
         );
-        expect(
-          await device.renderingControlService()!.getMute(),
-          isTrue,
-          reason: raw,
-        );
+        expect(await device.renderingControl!.getMute(), isTrue, reason: raw);
       }
       reply(
         200,
@@ -167,13 +165,13 @@ void main() {
           '<u:GetMuteResponse xmlns:u="$_rcsNs"><CurrentMute>0</CurrentMute></u:GetMuteResponse>',
         ),
       );
-      expect(await device.renderingControlService()!.getMute(), isFalse);
+      expect(await device.renderingControl!.getMute(), isFalse);
     });
 
     test('turns a SOAP fault into a typed UPnPException', () async {
       reply(500, soapFaultXml);
       await expectLater(
-        device.avTransportService()!.play(),
+        device.avTransport!.play(),
         throwsA(
           isA<UPnPException>()
               .having((e) => e.errorCode, 'errorCode', 701)
@@ -196,7 +194,7 @@ void main() {
         contentType: 'text/html',
       );
       await expectLater(
-        device.avTransportService()!.play(),
+        device.avTransport!.play(),
         throwsA(
           isA<Exception>().having(
             (e) => e.toString(),
@@ -209,10 +207,7 @@ void main() {
 
     test('rejects a 200 response that is not a SOAP envelope', () async {
       reply(200, '<NotAnEnvelope/>');
-      await expectLater(
-        device.avTransportService()!.play(),
-        throwsA(isA<Exception>()),
-      );
+      await expectLater(device.avTransport!.play(), throwsA(isA<Exception>()));
     });
   });
 

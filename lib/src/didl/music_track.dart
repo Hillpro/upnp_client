@@ -1,6 +1,6 @@
-import 'package:upnp_client/src/diagnostics.dart';
-import 'package:xml/xml.dart';
 import 'package:upnp_client/src/didl/utils.dart';
+import 'package:upnp_client/src/utils/diagnostics.dart';
+import 'package:xml/xml.dart';
 
 const String _didlLiteNamespace =
     'urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/';

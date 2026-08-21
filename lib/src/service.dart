@@ -1,16 +1,18 @@
-import 'package:xml/xml.dart';
 import 'dart:convert';
-import 'package:upnp_client/src/device.dart';
 import 'dart:io';
-import 'package:upnp_client/src/diagnostics.dart';
-import 'package:upnp_client/src/xml_utils.dart';
-import 'package:upnp_client/src/action.dart';
-import 'package:upnp_client/src/data_type.dart';
-import 'package:upnp_client/src/upnp_exception.dart';
 import 'package:collection/collection.dart';
-import 'package:upnp_client/src/common_services/rendering_control.dart';
-import 'package:upnp_client/src/common_services/connection_manager.dart';
-import 'package:upnp_client/src/common_services/av_transport.dart';
+import 'package:upnp_client/src/services/av_transport.dart';
+import 'package:upnp_client/src/services/connection_manager.dart';
+import 'package:upnp_client/src/services/rendering_control.dart';
+import 'package:upnp_client/src/services/wan_connection.dart';
+import 'package:upnp_client/src/action.dart';
+import 'package:upnp_client/src/device.dart';
+import 'package:upnp_client/src/upnp_exception.dart';
+import 'package:upnp_client/src/types/data_type.dart';
+import 'package:upnp_client/src/types/upnp_service_type.dart';
+import 'package:upnp_client/src/utils/diagnostics.dart';
+import 'package:upnp_client/src/utils/xml_utils.dart';
+import 'package:xml/xml.dart';
 
 const String _soapEnvelopeNs = 'http://schemas.xmlsoap.org/soap/envelope/';
 const String _soapEncodingNs = 'http://schemas.xmlsoap.org/soap/encoding/';
@@ -26,8 +28,18 @@ class Service {
   /// The xml element the properties of this object were initialized from
   final XmlElement xml;
 
-  /// The service type
+  /// The service type, as the `<serviceType>` element declares it, including
+  /// its version.
   String? type;
+
+  /// The standard type this service implements, whatever version [type]
+  /// declares, or null when it is a vendor service the package does not know.
+  ///
+  /// Prefer this over comparing [type] directly: UDA 1.1 §1.3.2 makes a higher
+  /// version compatible with the one it extends, so a literal string match
+  /// against `...:AVTransport:1` misses an `...:AVTransport:2` device that
+  /// answers the same actions.
+  UpnpServiceType? get standardType => UpnpServiceType.tryParse(type);
 
   /// The service ID
   String? id;
@@ -46,16 +58,23 @@ class Service {
       throw Exception('ERROR: Invalid Service XML!\n$xml');
     }
 
-    // Strip version suffix for version-independent matching (UDA 1.1 §1.3.2)
-    final serviceType = xml.getElement('serviceType')?.innerText;
-    final serviceTypeBase = serviceType?.replaceFirst(RegExp(r':\d+$'), ':');
-
-    return switch (serviceTypeBase) {
-      'urn:schemas-upnp-org:service:RenderingControl:' =>
-        RenderingControlService.fromXml(device, xml),
-      'urn:schemas-upnp-org:service:ConnectionManager:' =>
-        ConnectionManagerService.fromXml(device, xml),
-      'urn:schemas-upnp-org:service:AVTransport:' => AvTransportService.fromXml(
+    return switch (UpnpServiceType.tryParse(
+      xml.getElement('serviceType')?.innerText,
+    )) {
+      UpnpServiceType.renderingControl => RenderingControlService.fromXml(
+        device,
+        xml,
+      ),
+      UpnpServiceType.connectionManager => ConnectionManagerService.fromXml(
+        device,
+        xml,
+      ),
+      UpnpServiceType.avTransport => AvTransportService.fromXml(device, xml),
+      UpnpServiceType.wanIpConnection => WanIpConnectionService.fromXml(
+        device,
+        xml,
+      ),
+      UpnpServiceType.wanPppConnection => WanPppConnectionService.fromXml(
         device,
         xml,
       ),
