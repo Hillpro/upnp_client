@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.3.0
+
+- **FEAT**: IGD NAT port mapping through `WanConnectionService`, subclassed as `WanIpConnectionService` (`WANIPConnection`) and `WanPppConnectionService` (`WANPPPConnection`) because both declare the same actions: `addPortMapping()`, `deletePortMapping()`, `getSpecificPortMappingEntry()`, `getGenericPortMappingEntry()` and `listPortMappings()`
+- **FEAT**: WAN connection state on the same services: `getExternalIpAddress()`, `getStatusInfo()` and `getNatRsipStatus()`. IGD error codes are named in `WanConnectionError`; 713 ends a mapping enumeration and 714 means "no such mapping", both surfacing as `null`
+- **FEAT**: Typed device profiles `InternetGatewayDevice`, `WanDevice`, `WanConnectionDevice`, `MediaRenderer` and `MediaServer`, returned by the new `Device.fromXmlTyped()` that discovery now uses. The gateway tiers mirror IGD:1 §2.2, so `gateway.connections` walks the two `deviceList` levels the template requires rather than searching for the service
+- **FEAT**: `UpnpDeviceType` and `UpnpServiceType` name every standard type URN this package references, matching version-independently per UDA 1.1 §1.3.2. `urn()` doubles as an SSDP search target: `getDevices(searchTarget: UpnpDeviceType.internetGatewayDevice.urn())`
+- **FEAT**: `Device.findService<T>()`, `findServices<T>()` and `allServices` search a device's whole subtree, for devices that do not follow their template
+- **FEAT**: `Device.serviceOfType()` and `Service.standardType` match on the UPnP service type rather than a Dart type, which is how to reach a service with no typed wrapper
+- **DEPRECATED**: `Device.avTransportService()`, `renderingControlService()` and `connectionManagerService()` — these belong to a device profile rather than to every device. Use `MediaRenderer.avTransport`, `MediaRenderer.renderingControl` and `MediaRenderer.connectionManager`, or the `MediaServer` equivalents. The old methods still behave identically
+- **INFO**: New `example/port_forward_example.dart` and `example/media_cast_example.dart`, with `example/example.md` as the entry point
+- **INFO**: Added the InternetGatewayDevice, WANDevice, WANConnectionDevice, WANIPConnection and WANPPPConnection specifications under doc/
+- **INFO**: Reorganised `lib/src/` into `devices/`, `services/`, `types/`, `utils/` and `didl/`.
+
 ## 1.2.2
 
 - **FIX**: `Device` equality and hashCode disagreed when one device had a UDN and the other did not (UDA 1.1 §2.3)
