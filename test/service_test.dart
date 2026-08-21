@@ -46,6 +46,24 @@ void main() {
     });
   });
 
+  group('Service.standardType', () {
+    test('resolves a known service whatever version it declares', () {
+      expect(device.services[0].standardType, UpnpServiceType.avTransport);
+      expect(device.services[1].standardType, UpnpServiceType.renderingControl);
+      // The fixture declares ConnectionManager:2.
+      expect(
+        device.services[2].standardType,
+        UpnpServiceType.connectionManager,
+        reason: 'a :2 service is the same standard type as :1',
+      );
+    });
+
+    test('is null for a vendor service', () {
+      expect(device.services[3].type, endsWith('SomethingElse:1'));
+      expect(device.services[3].standardType, isNull);
+    });
+  });
+
   group('Service.fromXml', () {
     test('parses every URL element', () {
       final s = device.services.first;

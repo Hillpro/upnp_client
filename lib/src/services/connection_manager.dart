@@ -1,5 +1,5 @@
-import 'package:upnp_client/src/diagnostics.dart';
 import 'package:upnp_client/src/service.dart';
+import 'package:upnp_client/src/utils/diagnostics.dart';
 
 /// An UPnP ConnectionManager service
 /// https://upnp.org/specs/av/UPnP-av-ConnectionManager-v1-Service.pdf

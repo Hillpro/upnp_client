@@ -1,5 +1,5 @@
+import 'package:upnp_client/src/utils/xml_utils.dart';
 import 'package:xml/xml.dart';
-import 'package:upnp_client/src/xml_utils.dart';
 
 /// UDA 1.1 §3.2.5 — UPnP error codes returned in SOAP Fault responses.
 ///

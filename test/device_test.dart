@@ -6,7 +6,7 @@ import 'fixtures.dart';
 
 Device parseDevice({String? url, String? urlBase}) {
   final root = XmlDocument.parse(deviceDescriptionXml).rootElement;
-  return Device.fromXml(
+  return Device.fromXmlTyped(
     root.getElement('device')!,
     url,
     urlBase ?? root.getElement('URLBase')?.innerText,
@@ -21,6 +21,41 @@ Device udnDevice(String? udn, String? url) => Device.fromXml(
         : '<device><UDN>$udn</UDN></device>',
   ).rootElement,
   url,
+);
+
+/// A three-level tree of unrecognised device types where only the leaf, two
+/// `deviceList` levels down, carries a service. Deliberately not a real
+/// profile: it pins [Device.findService] for any nesting, whatever the
+/// deviceType. `igdDescriptionXml` covers the typed gateway tiers.
+Device nestedDevice() => Device.fromXml(
+  XmlDocument.parse('''
+<device>
+  <deviceType>urn:acme-example:device:Outer:1</deviceType>
+  <UDN>uuid:root</UDN>
+  <deviceList>
+    <device>
+      <deviceType>urn:acme-example:device:Middle:1</deviceType>
+      <UDN>uuid:wan</UDN>
+      <deviceList>
+        <device>
+          <deviceType>urn:acme-example:device:Inner:1</deviceType>
+          <UDN>uuid:wanconn</UDN>
+          <serviceList>
+            <service>
+              <serviceType>urn:schemas-upnp-org:service:RenderingControl:1</serviceType>
+              <serviceId>urn:upnp-org:serviceId:RenderingControl</serviceId>
+              <SCPDURL>deep.xml</SCPDURL>
+              <controlURL>deep/control</controlURL>
+              <eventSubURL>deep/event</eventSubURL>
+            </service>
+          </serviceList>
+        </device>
+      </deviceList>
+    </device>
+  </deviceList>
+</device>
+''').rootElement,
+  'http://gw/desc.xml',
 );
 
 void main() {
@@ -95,15 +130,148 @@ void main() {
     });
   });
 
-  group('typed service accessors', () {
-    test('return the matching typed service', () {
+  group('serviceOfType', () {
+    test('finds a service by its UPnP type', () {
       final device = parseDevice();
+      expect(
+        device.serviceOfType(UpnpServiceType.avTransport)!.url,
+        'AVTransport.xml',
+      );
+    });
+
+    test('matches regardless of the version the device declares', () {
+      // The fixture advertises ConnectionManager:2.
+      final device = parseDevice();
+      expect(
+        device.serviceOfType(UpnpServiceType.connectionManager),
+        isNotNull,
+      );
+    });
+
+    test('returns null when the device advertises no such service', () {
+      expect(
+        parseDevice().serviceOfType(UpnpServiceType.contentDirectory),
+        isNull,
+      );
+    });
+
+    test('is scoped to the receiving device, not its subtree', () {
+      // Both the root and the embedded device carry an AVTransport; each must
+      // report its own.
+      final device = parseDevice();
+      expect(
+        device.serviceOfType(UpnpServiceType.avTransport)!.url,
+        'AVTransport.xml',
+      );
+      expect(
+        device.devices.single.serviceOfType(UpnpServiceType.avTransport)!.url,
+        'embedded/AVTransport.xml',
+      );
+      expect(
+        nestedDevice().serviceOfType(UpnpServiceType.renderingControl),
+        isNull,
+        reason: 'the match is two deviceList levels down',
+      );
+    });
+  });
+
+  group('service tree lookup', () {
+    test('allServices walks the whole subtree, root services first', () {
+      final device = parseDevice();
+      expect(device.services, hasLength(4));
+      expect(
+        device.allServices,
+        hasLength(5),
+        reason: "4 on the root device, 1 on the embedded one",
+      );
+      expect(
+        device.allServices.take(4),
+        containsAll(device.services),
+        reason: 'depth first: own services precede embedded ones',
+      );
+      expect(device.allServices.last, device.devices.single.services.single);
+    });
+
+    test('findService reaches a service two deviceList levels down', () {
+      // The lookup the AV accessors cannot do: nothing on the root device.
+      final gateway = nestedDevice();
+      expect(gateway.services, isEmpty);
+      expect(gateway.findService<RenderingControlService>(), isNotNull);
+      expect(gateway.findService<RenderingControlService>()!.url, 'deep.xml');
+    });
+
+    test('findService returns the shallowest match', () {
+      final device = parseDevice();
+      expect(
+        device.findService<AvTransportService>()!.url,
+        'AVTransport.xml',
+        reason: 'the root service, not the embedded one',
+      );
+    });
+
+    test('findService returns null when the subtree has no such service', () {
+      expect(nestedDevice().findService<AvTransportService>(), isNull);
+    });
+
+    test('findServices returns every match in the subtree', () {
+      final urls = parseDevice().findServices<AvTransportService>().map(
+        (service) => service.url,
+      );
+      expect(urls, ['AVTransport.xml', 'embedded/AVTransport.xml']);
+    });
+
+    test('findServices is empty rather than null when nothing matches', () {
+      expect(nestedDevice().findServices<AvTransportService>(), isEmpty);
+    });
+
+    test('findService is the only lookup that leaves the device', () {
+      // The profile accessors use singleOrNull on their own services, so
+      // recursing would break them on any device that repeats a service type
+      // in an embedded device - as the fixture does with AVTransport.
+      final renderer = parseDevice() as MediaRenderer;
+      expect(renderer.avTransport!.url, 'AVTransport.xml');
+      expect(renderer.findServices<AvTransportService>(), hasLength(2));
+    });
+  });
+
+  group('deprecated service accessors', () {
+    // Kept so the typed-profile move is not a breaking change. They must stay
+    // on Device, scoped to its own services, exactly as before.
+    test('still resolve on a device built through the typed factory', () {
+      final device = parseDevice();
+      // ignore: deprecated_member_use_from_same_package
       expect(device.avTransportService(), isA<AvTransportService>());
+      // ignore: deprecated_member_use_from_same_package
       expect(device.renderingControlService(), isA<RenderingControlService>());
       expect(
+        // ignore: deprecated_member_use_from_same_package
         device.connectionManagerService(),
         isA<ConnectionManagerService>(),
       );
+    });
+
+    test('agree with the profile accessors that replace them', () {
+      final renderer = parseDevice() as MediaRenderer;
+      // ignore: deprecated_member_use_from_same_package
+      expect(renderer.avTransportService(), renderer.avTransport);
+      // ignore: deprecated_member_use_from_same_package
+      expect(renderer.renderingControlService(), renderer.renderingControl);
+      // ignore: deprecated_member_use_from_same_package
+      expect(renderer.connectionManagerService(), renderer.connectionManager);
+    });
+
+    test('remain available on a plain Device, as before', () {
+      // The embedded device is not a recognised profile, so it has no typed
+      // accessors at all - the shim is the only way in for such callers.
+      final embedded = parseDevice().devices.single;
+      expect(embedded.runtimeType, Device);
+      // ignore: deprecated_member_use_from_same_package
+      expect(embedded.avTransportService()!.url, 'embedded/AVTransport.xml');
+    });
+
+    test('stay scoped to their own device', () {
+      // ignore: deprecated_member_use_from_same_package
+      expect(nestedDevice().avTransportService(), isNull);
     });
   });
 
@@ -190,7 +358,11 @@ void main() {
 
   test('toString includes the type and nested children', () {
     final s = parseDevice().toString();
-    expect(s, startsWith('Device{'));
+    expect(
+      s,
+      startsWith('MediaRenderer{'),
+      reason: 'the runtime profile, not the base type',
+    );
     expect(s, contains('Living Room'));
     expect(s, contains('services:'));
     expect(s, contains('devices:'));

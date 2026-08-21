@@ -7,7 +7,19 @@
 [![Package download statistics](https://img.shields.io/pub/dm/upnp_client.svg?color=brightgreen)](https://pub.dev/packages/upnp_client/score)
 [![Development Status](https://img.shields.io/badge/status-stable-blue.svg)](https://en.wikipedia.org/wiki/Software_release_life_cycle#Stable_release)
 
-Universal Plug and Play (UPnP) Client Implementation. Supports IGD control as well as DLNA
+Universal Plug and Play (UPnP) Client Implementation. Supports IGD control as well as DLNA media casting.
+
+**Covered**
+
+- **Discovery** — SSDP search over IPv4 and IPv6, returning typed device profiles
+- **DLNA casting** — `AVTransport` playback, `RenderingControl` volume and mute,
+  `ConnectionManager` format negotiation, and DIDL-Lite metadata
+- **IGD port forwarding** — NAT port mapping on `WANIPConnection` /
+  `WANPPPConnection`, plus external IP and WAN connection status
+
+**Not covered** — eventing (GENA `SUBSCRIBE`/`NOTIFY`), `ContentDirectory`
+browsing, and IPv6 pinholes. Services without a typed wrapper are still
+reachable through `Service.invokeAction`.
 
 ## Installation
 
@@ -19,9 +31,13 @@ dart pub add upnp_client
 
 ## Usage
 
-Refer to the example folder, e.g.
+See [example/example.md](example/example.md) for discovery, port forwarding and
+media casting, or run one of the examples against your own network:
+
 ```
-dart run example/upnp_client_example.dart
+dart run example/upnp_client_example.dart                 # discover everything
+dart run example/port_forward_example.dart 8080           # map a port on the router
+dart run example/media_cast_example.dart <http url>       # cast audio to a renderer
 ```
 
 

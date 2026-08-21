@@ -94,7 +94,12 @@ void main() {
       'http://192.168.1.50:8080/base/',
       reason: 'URLBase in the description wins over LOCATION',
     );
-    expect(device.avTransportService(), isNotNull);
+    expect(
+      device,
+      isA<MediaRenderer>(),
+      reason: 'discovery builds the typed profile',
+    );
+    expect((device as MediaRenderer).avTransport, isNotNull);
   });
 
   test('reports an error when the description fetch fails', () async {
