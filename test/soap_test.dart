@@ -17,6 +17,9 @@ import 'fixtures.dart';
 const _soapNs = 'http://schemas.xmlsoap.org/soap/envelope/';
 const _rcsNs = 'urn:schemas-upnp-org:service:RenderingControl:1';
 const _avtNs = 'urn:schemas-upnp-org:service:AVTransport:1';
+// The fixture declares ConnectionManager at :2 on purpose, to exercise
+// version-independent service matching.
+const _cmNs = 'urn:schemas-upnp-org:service:ConnectionManager:2';
 
 /// What the device saw.
 class Captured {
@@ -321,6 +324,28 @@ void main() {
         await expectLater(device.avTransport!.stop(), completes);
       },
     );
+
+    // One unparseable entry used to throw ArgumentError out of
+    // getProtocolInfo(), discarding every format that did parse - the opposite
+    // of useful when the point of asking is to learn what the device accepts.
+    test('skips malformed protocolInfo entries rather than failing', () async {
+      reply(
+        200,
+        soapResponse(
+          '<u:GetProtocolInfoResponse xmlns:u="$_cmNs">'
+          '<Source></Source>'
+          '<Sink>http-get:*:audio/mpeg:*,garbage,'
+          'http-get:*:video/mp4:DLNA.ORG_OP=01:01</Sink>'
+          '</u:GetProtocolInfoResponse>',
+        ),
+      );
+      final info = await device.connectionManager!.getProtocolInfo();
+      expect(info.sink.map((p) => p.toString()).toList(), [
+        'http-get:*:audio/mpeg:*',
+        'http-get:*:video/mp4:DLNA.ORG_OP=01:01',
+      ]);
+      expect(info.source, isEmpty);
+    });
 
     test('reports a non-XML error page without an XML parse error', () async {
       // Regression: the body was parsed before the status was checked, so an

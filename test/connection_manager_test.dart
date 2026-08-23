@@ -34,4 +34,17 @@ void main() {
       expect(() => ProtocolInfo.fromString(''), throwsA(isA<ArgumentError>()));
     });
   });
+
+  group('ProtocolInfo.tryParse', () {
+    test('parses what fromString parses', () {
+      const raw = 'http-get:*:audio/mpeg:DLNA.ORG_OP=01:01';
+      expect(ProtocolInfo.tryParse(raw)?.toString(), raw);
+    });
+
+    test('returns null where fromString throws', () {
+      expect(ProtocolInfo.tryParse('http-get:*:audio/mpeg'), isNull);
+      expect(ProtocolInfo.tryParse(''), isNull);
+      expect(ProtocolInfo.tryParse('garbage'), isNull);
+    });
+  });
 }
