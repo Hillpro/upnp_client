@@ -297,6 +297,31 @@ void main() {
     });
   });
 
+  group('deprecated modelType', () {
+    // No UPnP version defines a <modelType> element, so nothing a compliant
+    // device sends can reach this field. Kept reading until removal so the
+    // deprecation is not itself a breaking change.
+    test('still parses an unqualified element, as before', () {
+      final xml = XmlDocument.parse(
+        '<device><modelType>off-spec value</modelType></device>',
+      ).rootElement;
+      // ignore: deprecated_member_use_from_same_package
+      expect(DeviceDescription.fromXml(xml).modelType, 'off-spec value');
+    });
+
+    test('never sees the only form the schema would allow', () {
+      // device-1-0.xsd admits vendor elements through
+      // <xsd:any namespace="##other">, so a valid extension is qualified.
+      final xml = XmlDocument.parse(
+        '<device xmlns="urn:schemas-upnp-org:device-1-0" '
+        'xmlns:v="http://vendor.example/ext">'
+        '<v:modelType>vendor value</v:modelType></device>',
+      ).rootElement;
+      // ignore: deprecated_member_use_from_same_package
+      expect(DeviceDescription.fromXml(xml).modelType, isNull);
+    });
+  });
+
   group('equality', () {
     test('two devices with the same UUID are equal', () {
       expect(parseDevice(url: 'http://a/'), parseDevice(url: 'http://b/'));

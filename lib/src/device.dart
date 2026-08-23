@@ -226,6 +226,20 @@ class DeviceDescription {
   String? modelDescription;
 
   /// The type of model of this device
+  ///
+  /// Deprecated: no UPnP version defines a `<modelType>` element. UDA 1.0,
+  /// 1.1 and 2.0 list exactly four - `modelDescription`, `modelName`,
+  /// `modelNumber` and `modelURL` - and `device-1-0.xsd` admits vendor
+  /// elements only through `<xsd:any namespace="##other">`, so a schema-valid
+  /// extension is namespace-qualified and never matches this unqualified
+  /// lookup. Use [modelName], [modelNumber] or [modelDescription] instead.
+  ///
+  /// Behaviour is unchanged until removal: a device that emits the element
+  /// unqualified, against the schema, still populates it.
+  @Deprecated(
+    'No UPnP version defines <modelType>; '
+    'use modelName, modelNumber or modelDescription',
+  )
   String? modelType;
 
   /// The URL to the model site
@@ -257,6 +271,7 @@ class DeviceDescription {
     modelName = _xml.getElement('modelName')?.innerText;
     modelNumber = _xml.getElement('modelNumber')?.innerText;
     modelDescription = _xml.getElement('modelDescription')?.innerText;
+    // ignore: deprecated_member_use_from_same_package
     modelType = _xml.getElement('modelType')?.innerText;
     modelUrl = _xml.getElement('modelURL')?.innerText;
     serialNumber = _xml.getElement('serialNumber')?.innerText;
