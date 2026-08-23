@@ -179,13 +179,23 @@ class Service {
         // Body is not XML (plain text or HTML error page).
       }
 
+      // A fault is a fault whatever the status line says. UDA 1.1 §3.2.5 pairs
+      // one with HTTP 500, but devices do return them under 200, and reading
+      // the status first would drop the error code the device took the trouble
+      // to send.
+      if (soapBody != null) {
+        final upnpEx = UPnPException.tryParseFromBody(
+          soapBody,
+          actionName: name,
+        );
+        if (upnpEx != null) throw upnpEx;
+      }
+
       if (response.statusCode != 200) {
-        UPnPException? upnpEx;
-        if (soapBody != null) {
-          upnpEx = UPnPException.tryParseFromBody(soapBody, actionName: name);
-        }
-        throw upnpEx ??
-            Exception('ERROR: Failed posting action $name!\n$respBody');
+        throw Exception(
+          'ERROR: Failed posting action $name, HTTP '
+          '${response.statusCode}!\n$respBody',
+        );
       }
 
       if (soapBody == null) {
@@ -229,17 +239,27 @@ class Service {
       builder.buildDocument().rootElement,
     );
 
-    final XmlElement? respEl = respXml.getElement(
+    // Namespace first, then local name. UDA 1.1 §3.2.2 requires the device to
+    // echo the request namespace, so a `...:1` request should come back in
+    // `...:1` - but a device that answers in another version of its own service
+    // type is still answering, and dropping the out arguments over it would
+    // undo the version-independent matching.
+    final XmlElement? respEl = respXml.getElementAnyNs(
       '${name}Response',
-      // ignore: deprecated_member_use
       namespace: type!,
     );
 
-    final List<XmlElement> respArgs = (respEl?.children ?? [])
-        .whereType<XmlElement>()
-        .toList();
+    // Its absence is the only signal that the body was not the response to
+    // this action; an action with no out arguments returns the element empty.
+    if (respEl == null) {
+      throw Exception(
+        'ERROR: SOAP response to $name carries no <${name}Response>!\n'
+        '${respXml.toXmlString()}',
+      );
+    }
+
     final Map<String, String> map = <String, String>{};
-    for (final arg in respArgs) {
+    for (final arg in respEl.childElements) {
       map[arg.name.local] = arg.innerText;
     }
     return map;

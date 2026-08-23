@@ -257,6 +257,71 @@ void main() {
       );
     });
 
+    // The three below are one defect: invokeAction could not tell "this action
+    // has no out arguments" from "this body is not the response", and returned
+    // {} for both. Every wrapper then handed back a sentinel a caller cannot
+    // distinguish from data - -1 from getVolume(), null from
+    // getExternalIpAddress(), [] from a mapping enumeration.
+    test('reports a fault carried under HTTP 200', () async {
+      // UDA 1.1 §3.2.5 pairs a fault with 500, but devices send them under 200.
+      // This used to yield {} and, through getVolume(), a silent -1.
+      reply(200, soapFaultXml);
+      await expectLater(
+        device.renderingControl!.getVolume(),
+        throwsA(
+          isA<UPnPException>().having((e) => e.errorCode, 'errorCode', 701),
+        ),
+      );
+    });
+
+    test(
+      'accepts a response namespaced at another version of the type',
+      () async {
+        // UDA 1.1 §3.2.2 says the device must echo the request namespace, so
+        // this device is at fault - but it is answering, and the rest of the
+        // package matches service types version-independently. Dropping the
+        // value here contradicted that.
+        reply(
+          200,
+          soapResponse(
+            '<u:GetVolumeResponse '
+            'xmlns:u="urn:schemas-upnp-org:service:RenderingControl:2">'
+            '<CurrentVolume>42</CurrentVolume></u:GetVolumeResponse>',
+          ),
+        );
+        expect(await device.renderingControl!.getVolume(), 42);
+      },
+    );
+
+    test('throws when the body carries no response element', () async {
+      reply(
+        200,
+        soapResponse(
+          '<u:SomeOtherResponse xmlns:u="$_rcsNs"><X>1</X></u:SomeOtherResponse>',
+        ),
+      );
+      await expectLater(
+        device.renderingControl!.getVolume(),
+        throwsA(
+          isA<Exception>().having(
+            (e) => e.toString(),
+            'message',
+            contains('GetVolumeResponse'),
+          ),
+        ),
+      );
+    });
+
+    test(
+      'still returns an empty map for an action with no out arguments',
+      () async {
+        // The counterpart: presence of the element is the success signal, so an
+        // empty one must stay a success rather than becoming the error above.
+        reply(200, soapResponse('<u:StopResponse xmlns:u="$_avtNs"/>'));
+        await expectLater(device.avTransport!.stop(), completes);
+      },
+    );
+
     test('reports a non-XML error page without an XML parse error', () async {
       // Regression: the body was parsed before the status was checked, so an
       // HTML error page surfaced as XmlParserException.
