@@ -68,12 +68,14 @@ enum DataType {
   dateTime('dateTime'),
 
   /// Date in ISO 8601 format with allowed time and allowed time zone.
+  // ignore: constant_identifier_names
   dateTime_tz('dateTime.tz'),
 
   /// Time in a subset of ISO 8601 format with no date and no time zone.
   time('time'),
 
   /// Time in a subset of ISO 8601 format with allowed time zone but no date.
+  // ignore: constant_identifier_names
   time_tz('time.tz'),
 
   /// "0" for false or "1" for true. The values "true", "yes", "false", or "no" are
@@ -85,10 +87,12 @@ enum DataType {
   /// MIME-style Base64 encoded binary BLOB. Takes 3 Bytes, splits them into 4
   /// parts, and maps each 6 bit piece to an octet. (3 octets are encoded as 4.)
   /// No limit on size.
+  // ignore: constant_identifier_names
   bin_base64('bin.base64'),
 
   /// Hexadecimal digits representing octets. Treats each nibble as a hex digit
   /// and encodes as a separate Byte. (1 octet is encoded as 2.) No limit on size.
+  // ignore: constant_identifier_names
   bin_hex('bin.hex'),
 
   /// Universal Resource Identifier.
