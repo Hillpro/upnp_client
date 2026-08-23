@@ -9,6 +9,9 @@ environment:
   sdk: '>=3.8.0 <4.0.0'
 
 dependencies:
+  # xml 7.0.1 deprecates the `namespace`/`namespaces` arguments, but their
+  # replacements need Dart 3.11, above the SDK floor above. Migrate and drop
+  # those when we require 3.11.
   xml: '>=6.6.1 <8.0.0'
   collection: ^1.19.1
 

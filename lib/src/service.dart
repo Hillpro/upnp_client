@@ -133,10 +133,13 @@ class Service {
     final XmlBuilder builder = XmlBuilder();
     builder.element(
       'Envelope',
+      // ignore: deprecated_member_use
       namespace: _soapEnvelopeNs,
+      // ignore: deprecated_member_use
       namespaces: {_soapEnvelopeNs: 's'},
       attributes: {'s:encodingStyle': _soapEncodingNs},
       nest: () {
+        // ignore: deprecated_member_use
         builder.element('Body', namespace: _soapEnvelopeNs, nest: body);
       },
     );
@@ -167,6 +170,7 @@ class Service {
         if (xmlResp.rootElement.name.local == 'Envelope') {
           soapBody = xmlResp.rootElement.getElement(
             'Body',
+            // ignore: deprecated_member_use
             namespace: _soapEnvelopeNs,
           );
         }
@@ -208,7 +212,9 @@ class Service {
     final XmlBuilder builder = XmlBuilder();
     builder.element(
       name,
+      // ignore: deprecated_member_use
       namespace: type!,
+      // ignore: deprecated_member_use
       namespaces: {type!: 'u'},
       nest: () {
         for (final it in args.entries) {
@@ -224,6 +230,7 @@ class Service {
 
     final XmlElement? respEl = respXml.getElement(
       '${name}Response',
+      // ignore: deprecated_member_use
       namespace: type!,
     );
 

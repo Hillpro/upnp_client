@@ -15,6 +15,7 @@ extension XmlElementUtils on XmlElement {
   /// Finds a child element by [localName], trying [namespace] first and
   /// falling back to a local-name-only scan.
   XmlElement? getElementAnyNs(String localName, {String? namespace}) =>
+      // ignore: deprecated_member_use
       getElement(localName, namespace: namespace) ??
       childElements.where((e) => e.name.local == localName).firstOrNull;
 }

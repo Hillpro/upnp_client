@@ -1,3 +1,10 @@
+// Blanket suppression, tests only: this file reads XML through xml's
+// deprecated `namespace` argument (see pubspec.yaml). Safe to widen here
+// because it cannot hide this package's own deprecations, which report under
+// the separate `deprecated_member_use_from_same_package` name. lib/ keeps
+// line-level ignores, where an unrelated deprecation must still surface.
+// ignore_for_file: deprecated_member_use
+
 import 'package:test/test.dart';
 import 'package:upnp_client/upnp_client.dart';
 import 'package:xml/xml.dart';

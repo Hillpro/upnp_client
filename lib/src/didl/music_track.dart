@@ -37,7 +37,9 @@ class MusicTrack {
     XmlBuilder builder = XmlBuilder();
     builder.element(
       'DIDL-Lite',
+      // ignore: deprecated_member_use
       namespace: _didlLiteNamespace,
+      // ignore: deprecated_member_use
       namespaces: {
         _didlLiteNamespace: null,
         _dcNamespace: 'dc',
@@ -50,16 +52,21 @@ class MusicTrack {
           attributes: {'id': id, 'parentID': '', 'restricted': '1'},
           nest: () {
             // didl-lite.xsd item.type requires dc:title first, then upnp:class.
+            // ignore: deprecated_member_use
             builder.element('title', namespace: _dcNamespace, nest: title);
             builder.element(
               'class',
+              // ignore: deprecated_member_use
               namespace: _upnpNamespace,
               nest: 'object.item.audioItem.musicTrack',
             );
+            // ignore: deprecated_member_use
             builder.element('artist', namespace: _upnpNamespace, nest: artist);
+            // ignore: deprecated_member_use
             builder.element('album', namespace: _upnpNamespace, nest: album);
             builder.element(
               'albumArtURI',
+              // ignore: deprecated_member_use
               namespace: _upnpNamespace,
               nest: artUri,
             );
