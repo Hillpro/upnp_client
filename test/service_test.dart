@@ -135,4 +135,31 @@ void main() {
       expect(playMode.allowedValues, ['NORMAL', 'SHUFFLE']);
     });
   });
+
+  group('StateVariable sendEvents', () {
+    // UDA 1.1 §2.5 - OPTIONAL, and "Default value is "yes"". §4.4 restates it:
+    // a variable is evented when the value is "yes" *or the attribute is
+    // omitted*. The normative text uses "yes"/"no"; UDA 1.1's own appendix B
+    // schema uses "1"/"0" with default "1", so devices send both spellings.
+    bool sendEvents(String attribute) => StateVariable.fromXml(
+      XmlDocument.parse(
+        '<stateVariable $attribute><name>V</name>'
+        '<dataType>ui2</dataType></stateVariable>',
+      ).rootElement,
+    ).sendEventsAttribute;
+
+    test('defaults to evented when the attribute is omitted', () {
+      expect(sendEvents(''), isTrue);
+    });
+
+    test('reads the "yes"/"no" spelling from the normative text', () {
+      expect(sendEvents('sendEvents="yes"'), isTrue);
+      expect(sendEvents('sendEvents="no"'), isFalse);
+    });
+
+    test('reads the "1"/"0" spelling from the appendix B schema', () {
+      expect(sendEvents('sendEvents="1"'), isTrue);
+      expect(sendEvents('sendEvents="0"'), isFalse);
+    });
+  });
 }

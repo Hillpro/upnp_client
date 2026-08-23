@@ -9,6 +9,7 @@ import 'package:upnp_client/src/action.dart';
 import 'package:upnp_client/src/device.dart';
 import 'package:upnp_client/src/upnp_exception.dart';
 import 'package:upnp_client/src/types/data_type.dart';
+import 'package:upnp_client/src/types/data_type_parsers.dart';
 import 'package:upnp_client/src/types/upnp_service_type.dart';
 import 'package:upnp_client/src/utils/diagnostics.dart';
 import 'package:upnp_client/src/utils/xml_utils.dart';
@@ -293,8 +294,12 @@ class StateVariable {
   /// The name of this state variable
   String? name;
 
-  /// Whether event messages will be generated when the value of this state variable changes
-  bool sendEventsAttribute = false;
+  /// Whether event messages will be generated when the value of this state
+  /// variable changes
+  ///
+  /// UDA 1.1 §2.5 - the `sendEvents` attribute is OPTIONAL and defaults to
+  /// "yes", so a variable that omits it is evented.
+  bool sendEventsAttribute = true;
 
   /// The data type of this state variable
   DataType? dataType;
@@ -308,7 +313,14 @@ class StateVariable {
     }
 
     name = xml.getElement('name')?.innerText;
-    sendEventsAttribute = xml.getAttribute('sendEvents') == 'yes';
+    // UDA 1.1 §2.5 - `sendEvents` is OPTIONAL and its default is "yes", so an
+    // absent attribute means the variable IS evented; §4.4 says the same in
+    // as many words. The normative text spells the values "yes"/"no" while
+    // UDA 1.1's own appendix B schema spells them "1"/"0", so a device may
+    // send either form and [parseUpnpBool] accepts both.
+    sendEventsAttribute = parseUpnpBool(
+      xml.getAttribute('sendEvents') ?? 'yes',
+    );
     dataType = DataType.values.firstWhereOrNull(
       (dt) => dt.value == xml.getElement('dataType')?.innerText,
     );
