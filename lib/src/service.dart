@@ -103,27 +103,32 @@ class Service {
     final httpClient = HttpClient();
     httpClient.connectionTimeout = _actionTimeout;
     try {
-      final Uri descriptionUrl = _resolveUrl(url!);
-      final HttpClientRequest request = await httpClient.getUrl(descriptionUrl);
-      final HttpClientResponse response = await request.close().timeout(
-        _actionTimeout,
-      );
-      final String body = await response.transform(utf8.decoder).join();
-
-      // UDA 1.1 §2.11 defines the description response as "200 OK";
-      // anything else is an error page rather than XML.
-      if (response.statusCode != 200) {
-        throw Exception(
-          'ERROR: Service description request failed with status '
-          '${response.statusCode}: $descriptionUrl',
-        );
-      }
-
-      final XmlElement serviceDescXml = XmlDocument.parse(body).rootElement;
-      return ServiceDescription.fromXml(this, serviceDescXml);
+      return await _fetchDescription(httpClient).timeout(_actionTimeout);
     } finally {
-      httpClient.close();
+      // force, or a connection the timeout abandoned mid-body stays open:
+      // a plain close leaves active connections alone. Nothing is lost by it
+      // here, since the client is built and discarded per call.
+      httpClient.close(force: true);
     }
+  }
+
+  Future<ServiceDescription> _fetchDescription(HttpClient httpClient) async {
+    final Uri descriptionUrl = _resolveUrl(url!);
+    final HttpClientRequest request = await httpClient.getUrl(descriptionUrl);
+    final HttpClientResponse response = await request.close();
+    final String body = await response.transform(utf8.decoder).join();
+
+    // UDA 1.1 §2.11 defines the description response as "200 OK";
+    // anything else is an error page rather than XML.
+    if (response.statusCode != 200) {
+      throw Exception(
+        'ERROR: Service description request failed with status '
+        '${response.statusCode}: $descriptionUrl',
+      );
+    }
+
+    final XmlElement serviceDescXml = XmlDocument.parse(body).rootElement;
+    return ServiceDescription.fromXml(this, serviceDescXml);
   }
 
   Future<XmlElement> sendToControlUrl(String name, XmlElement body) async {
@@ -149,63 +154,71 @@ class Service {
     final httpClient = HttpClient();
     httpClient.connectionTimeout = _actionTimeout;
     try {
-      final HttpClientRequest request = await httpClient.postUrl(
-        _resolveUrl(controlUrl!),
-      );
-      request.headers.set('SOAPACTION', '"$type#$name"');
-      request.headers.set('Content-Type', 'text/xml; charset="utf-8"');
-      request.headers.set('Content-Length', utf8.encode(xmlReq).length);
-      request.write(xmlReq);
-      final HttpClientResponse response = await request.close().timeout(
-        _actionTimeout,
-      );
-
-      final String respBody = await response
-          .cast<List<int>>()
-          .transform(utf8.decoder)
-          .join();
-
-      XmlElement? soapBody;
-      try {
-        final XmlDocument xmlResp = XmlDocument.parse(respBody);
-        if (xmlResp.rootElement.name.local == 'Envelope') {
-          soapBody = xmlResp.rootElement.getElement(
-            'Body',
-            // ignore: deprecated_member_use
-            namespace: _soapEnvelopeNs,
-          );
-        }
-      } on XmlException {
-        // Body is not XML (plain text or HTML error page).
-      }
-
-      // A fault is a fault whatever the status line says. UDA 1.1 §3.2.5 pairs
-      // one with HTTP 500, but devices do return them under 200, and reading
-      // the status first would drop the error code the device took the trouble
-      // to send.
-      if (soapBody != null) {
-        final upnpEx = UPnPException.tryParseFromBody(
-          soapBody,
-          actionName: name,
-        );
-        if (upnpEx != null) throw upnpEx;
-      }
-
-      if (response.statusCode != 200) {
-        throw Exception(
-          'ERROR: Failed posting action $name, HTTP '
-          '${response.statusCode}!\n$respBody',
-        );
-      }
-
-      if (soapBody == null) {
-        throw Exception('ERROR: Invalid SOAP response!\n$respBody');
-      }
-
-      return soapBody;
+      return await _postAction(
+        httpClient,
+        name,
+        xmlReq,
+      ).timeout(_actionTimeout);
     } finally {
-      httpClient.close();
+      // See [getDescription]: force, or the timeout leaves a socket open.
+      httpClient.close(force: true);
     }
+  }
+
+  Future<XmlElement> _postAction(
+    HttpClient httpClient,
+    String name,
+    String xmlReq,
+  ) async {
+    final HttpClientRequest request = await httpClient.postUrl(
+      _resolveUrl(controlUrl!),
+    );
+    request.headers.set('SOAPACTION', '"$type#$name"');
+    request.headers.set('Content-Type', 'text/xml; charset="utf-8"');
+    request.headers.set('Content-Length', utf8.encode(xmlReq).length);
+    request.write(xmlReq);
+    final HttpClientResponse response = await request.close();
+
+    final String respBody = await response
+        .cast<List<int>>()
+        .transform(utf8.decoder)
+        .join();
+
+    XmlElement? soapBody;
+    try {
+      final XmlDocument xmlResp = XmlDocument.parse(respBody);
+      if (xmlResp.rootElement.name.local == 'Envelope') {
+        soapBody = xmlResp.rootElement.getElement(
+          'Body',
+          // ignore: deprecated_member_use
+          namespace: _soapEnvelopeNs,
+        );
+      }
+    } on XmlException {
+      // Body is not XML (plain text or HTML error page).
+    }
+
+    // A fault is a fault whatever the status line says. UDA 1.1 §3.2.5 pairs
+    // one with HTTP 500, but devices do return them under 200, and reading
+    // the status first would drop the error code the device took the trouble
+    // to send.
+    if (soapBody != null) {
+      final upnpEx = UPnPException.tryParseFromBody(soapBody, actionName: name);
+      if (upnpEx != null) throw upnpEx;
+    }
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'ERROR: Failed posting action $name, HTTP '
+        '${response.statusCode}!\n$respBody',
+      );
+    }
+
+    if (soapBody == null) {
+      throw Exception('ERROR: Invalid SOAP response!\n$respBody');
+    }
+
+    return soapBody;
   }
 
   /// Resolves a relative service [path] against the device's URL base.

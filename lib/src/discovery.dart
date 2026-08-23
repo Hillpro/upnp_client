@@ -115,41 +115,67 @@ class DeviceDiscoverer {
     if (separatorIndex == -1) return;
     final location = locationHeader.substring(separatorIndex + 1).trim();
 
+    final Uri locationUri;
+    try {
+      locationUri = Uri.parse(location);
+    } on FormatException catch (e, st) {
+      // A device advertising an unparseable LOCATION is worth reporting, so
+      // this stays on the errors stream rather than being dropped quietly.
+      _errors.addError(e, st);
+      return;
+    }
+
+    // UDA 1.1 §1.3.3: LOCATION must be a single absolute URL.
+    // Accept http and https; drop anything else (e.g. malformed or unknown schemes).
+    if (!{'http', 'https'}.contains(locationUri.scheme) ||
+        locationUri.host.isEmpty) {
+      return;
+    }
+
     final httpClient = HttpClient();
     httpClient.connectionTimeout = _descriptionTimeout;
     try {
-      final locationUri = Uri.parse(location);
-      // UDA 1.1 §1.3.3: LOCATION must be a single absolute URL.
-      // Accept http and https; drop anything else (e.g. malformed or unknown schemes).
-      if (!{'http', 'https'}.contains(locationUri.scheme) ||
-          locationUri.host.isEmpty) {
-        return;
-      }
-
-      final request = await httpClient.getUrl(locationUri);
-      final response = await request.close().timeout(_descriptionTimeout);
-      final body = await response.transform(utf8.decoder).join();
-
-      // UDA 1.1 §2.11 defines the description response as "200 OK";
-      // anything else is an error page rather than XML.
-      if (response.statusCode != 200) {
-        throw Exception(
-          'ERROR: Device description request failed with status '
-          '${response.statusCode}: $location',
-        );
-      }
-
-      final rootElement = XmlDocument.parse(body).rootElement;
-      final urlBase = rootElement.getElement('URLBase')?.innerText;
-      final deviceXml = rootElement.getElement('device');
-
-      if (deviceXml != null) {
-        _devices.add(Device.fromXmlTyped(deviceXml, location, urlBase));
-      }
+      // One deadline for the whole fetch. A device that sends headers and then
+      // stalls mid-body used to hold this future open forever, and one such
+      // device on the network was enough to leak a socket per search.
+      await _fetchDevice(
+        httpClient,
+        locationUri,
+        location,
+      ).timeout(_descriptionTimeout);
     } on Exception catch (e, st) {
       _errors.addError(e, st);
     } finally {
-      httpClient.close();
+      // force, or the connection the timeout abandoned stays open: a plain
+      // close leaves active connections alone.
+      httpClient.close(force: true);
+    }
+  }
+
+  Future<void> _fetchDevice(
+    HttpClient httpClient,
+    Uri locationUri,
+    String location,
+  ) async {
+    final request = await httpClient.getUrl(locationUri);
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+
+    // UDA 1.1 §2.11 defines the description response as "200 OK";
+    // anything else is an error page rather than XML.
+    if (response.statusCode != 200) {
+      throw Exception(
+        'ERROR: Device description request failed with status '
+        '${response.statusCode}: $location',
+      );
+    }
+
+    final rootElement = XmlDocument.parse(body).rootElement;
+    final urlBase = rootElement.getElement('URLBase')?.innerText;
+    final deviceXml = rootElement.getElement('device');
+
+    if (deviceXml != null) {
+      _devices.add(Device.fromXmlTyped(deviceXml, location, urlBase));
     }
   }
 
