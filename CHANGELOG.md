@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.4.0
+
+- **FIX**: `manufacturerUrl` and `modelUrl` were permanently null; the elements are `<manufacturerURL>` and `<modelURL>` (UDA 1.1 §3.2.1)
+- **FIX**: `sendEventsAttribute` defaults to true when the attribute is omitted, and accepts the `"1"`/`"0"` spelling (UDA 1.1 §2.5)
+- **FIX**: UPnP boolean values match case-insensitively (UDA 1.1 §2.5 and §3.2)
+- **FIX**: `PlayMode.direct1` sends `DIRECT_1`, not `"DIRECT 1"` (AVTransport:1 §3)
+- **FIX**: `SeekMode.tapeIndex` sends `TAPE-INDEX`, not `TAPE_INDEX` (AVTransport:1 §3)
+- **FIX**: `getCurrentTransportActions()` trims its entries (AVTransport:1 §2.2.26)
+- **FIX**: A response body carrying no `<nameResponse>`, or a SOAP fault under HTTP 200, now throws instead of returning `{}` (UDA 1.1 §3.2.5). Callers previously got `-1` from `getVolume()` and `null` from `getExternalIpAddress()` where the response was unreadable
+- **FIX**: The 30-second timeout covers the whole HTTP exchange, not just the wait for headers (UDA 1.1 §3.2.2). A device stalling mid-body previously hung forever
+- **FIX**: `getProtocolInfo()` skips malformed entries instead of discarding every format that parsed
+- **FEAT**: `ProtocolInfo.tryParse`, the lenient counterpart of `fromString`
+- **FEAT**: `WanConnectionError` names twelve codes where it named five, adding 715, 716, 726 and 727 from WANIPConnection:1 and 728, 729 and 732 from WANIPConnection:2
+- **DEPRECATED**: `DeviceDescription.modelType` — no UPnP version defines a `<modelType>` element. Still parses until removal
+- **INFO**: Added the AVTransport:3 specification under `doc/`
+
+
 ## 1.3.1
 
 - **INFO**: Silenced the `namespace`/`namespaces` deprecation warnings introduced by xml 7.0.1. No behaviour change: the replacements require Dart 3.11, above this package's 3.8 SDK floor.
