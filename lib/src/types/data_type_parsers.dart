@@ -1,11 +1,18 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-/// Parses a UPnP boolean string per UDA 1.1 §2.3.9.
+/// Parses a UPnP boolean string per UDA 1.1 §2.5.
 ///
 /// '1' is the canonical value; 'true' and 'yes' are deprecated UDA 1.0 values
 /// that MUST still be accepted when received from older devices.
-bool parseUpnpBool(String? value) => const {'1', 'true', 'yes'}.contains(value);
+///
+/// Matched case-insensitively. Every UDA version repeats that values are not
+/// case sensitive except where noted - UDA 1.0 §2.1 and §2.3, UDA 1.1 §2.3,
+/// §2.5, §3.2 and §4.3, UDA 2.0 §2.3 and §2.5 - and neither the `boolean`
+/// data type nor the `sendEvents` attribute is ever noted as an exception, so
+/// 'YES' means what 'yes' means.
+bool parseUpnpBool(String? value) =>
+    const {'1', 'true', 'yes'}.contains(value?.toLowerCase());
 
 /// Parses a `ui4` count of seconds into a [Duration].
 ///
@@ -18,7 +25,7 @@ Duration? parseUpnpSeconds(String? value) {
   return seconds == null ? null : Duration(seconds: seconds);
 }
 
-/// Parses a UPnP time or time.tz string per UDA 1.1 §2.3.9.
+/// Parses a UPnP time or time.tz string per UDA 1.1 §2.5.
 ///
 /// Format is HH:MM:SS[.fraction][±HH:MM|Z]. Dart has no native time-of-day
 /// type, so the result is a [Duration] from midnight. The timezone offset is
@@ -47,7 +54,7 @@ Duration? parseUpnpTime(String? value) {
   );
 }
 
-/// Decodes a UPnP bin.base64 string per UDA 1.1 §2.3.9.
+/// Decodes a UPnP bin.base64 string per UDA 1.1 §2.5.
 ///
 /// MIME-style base64 includes CRLF line breaks every 76 characters. Dart's
 /// [base64] codec rejects those, so all whitespace is stripped first.
@@ -60,7 +67,7 @@ Uint8List? parseUpnpBase64(String? value) {
   }
 }
 
-/// Decodes a UPnP bin.hex string per UDA 1.1 §2.3.9.
+/// Decodes a UPnP bin.hex string per UDA 1.1 §2.5.
 ///
 /// Dart has no built-in hex decoder; each pair of hex digits is parsed
 /// individually. Returns null if the input is not valid hex.

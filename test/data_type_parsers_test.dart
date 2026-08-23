@@ -38,14 +38,23 @@ void main() {
       expect(parseUpnpBool('no'), isFalse);
     });
 
+    // Every UDA version says values are not case sensitive except where
+    // noted, and neither the `boolean` data type (UDA 1.1 §2.5) nor the
+    // `sendEvents` attribute is ever noted as an exception.
+    test('ignores case, as the spec requires of values', () {
+      expect(parseUpnpBool('TRUE'), isTrue);
+      expect(parseUpnpBool('True'), isTrue);
+      expect(parseUpnpBool('YES'), isTrue);
+      expect(parseUpnpBool('Yes'), isTrue);
+      expect(parseUpnpBool('FALSE'), isFalse);
+      expect(parseUpnpBool('No'), isFalse);
+    });
+
     test('is false for null and unknown values', () {
       expect(parseUpnpBool(null), isFalse);
       expect(parseUpnpBool(''), isFalse);
-      expect(
-        parseUpnpBool('TRUE'),
-        isFalse,
-        reason: 'values are case sensitive',
-      );
+      expect(parseUpnpBool('maybe'), isFalse);
+      expect(parseUpnpBool('2'), isFalse);
     });
   });
 

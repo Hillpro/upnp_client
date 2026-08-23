@@ -161,5 +161,11 @@ void main() {
       expect(sendEvents('sendEvents="1"'), isTrue);
       expect(sendEvents('sendEvents="0"'), isFalse);
     });
+
+    test('ignores case, since §2.5 values are not case sensitive', () {
+      expect(sendEvents('sendEvents="YES"'), isTrue);
+      expect(sendEvents('sendEvents="Yes"'), isTrue);
+      expect(sendEvents('sendEvents="NO"'), isFalse);
+    });
   });
 }
