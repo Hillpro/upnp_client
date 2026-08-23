@@ -33,6 +33,7 @@ Source: `https://upnp.org/specs/arch/`, `https://upnp.org/specs/av/` and
 | `UPnP-arch-DeviceArchitecture-v1.0.pdf` | The predecessor. Kept for backward compatibility: it documents conventions that older devices on the network still use, several of which v1.1 deprecates but still requires clients to accept. |
 | `UPnP-arch-DeviceArchitecture-v2.0.pdf` | The later revision. Its most useful additions are around IPv6, in particular the multicast scopes in Annex A. Not the version this project targets. See the revision note below. |
 | `UPnP-av-AVTransport-v1-Service.pdf` | Playback transport control: play, pause, stop, seek, track navigation, transport state and settings. Includes the per-action argument tables, which are normative as to argument order. |
+| `UPnP-av-AVTransport-v3-Service.pdf` | The current revision (March 31, 2013). Version-independent matching brings a v3 renderer through the v1 code path, so this is the action set such a device may actually offer: synchronised playback, server-side playlists, `GetStateVariables`/`SetStateVariables` and DRM state. Also settles the seek-unit spelling - see the note below. |
 | `UPnP-av-RenderingControl-v1-Service.pdf` | Rendering settings on a media renderer: volume, mute and the other per-channel controls. |
 | `UPnP-av-ConnectionManager-v1-Service.pdf` | Connection setup and capability negotiation between devices. Defines the `protocolInfo` grammar used to advertise supported formats. |
 | `UPnP-av-ContentDirectory-v1-Service.pdf` | Browsing and searching content on a media server. Defines **DIDL-Lite**, the XML metadata format used to describe media items; other AV services reference it rather than redefining it. |
@@ -55,6 +56,42 @@ UPnP specification hosting moved to the Open Connectivity Foundation, and `upnp.
 redirects unresolved spec paths to `www.openconnectivity.org`. The exact OCF URL for
 the 2020 revision is unverified - openconnectivity.org was unreachable when this was
 written.
+
+### Note on the AVTransport seek units
+
+`A_ARG_TYPE_SeekMode` looks like it contains a typo. Seven of its eight v1 values
+join words with an underscore - `TRACK_NR`, `ABS_TIME`, `REL_COUNT` - and one uses a
+hyphen: `TAPE-INDEX`. The hyphen is correct, and worth documenting because the
+temptation to "fix" it is strong:
+
+- The hyphen is what the normative `allowedValueList` says - v1 §3, v3 §6 - along with
+  the state variable's allowed-value table and the prose describing the units, in
+  **both** revisions.
+- v3 added `REL_TAPE-INDEX`, which mixes both separators in one token: `REL_` to match
+  `REL_TIME` and `REL_COUNT`, and the hyphen kept inside `TAPE-INDEX`. A value built
+  that way eleven years later is deliberate.
+- The underlying term is the hyphenated compound "tape-index", as the prose describing
+  the state variable writes it (v1 §2.2.29, v3 §5.2.32). An underscore joins two
+  separate words - "track number" gives `TRACK_NR` - and here there were never two
+  words to join.
+
+`TAPE_INDEX` does appear once per document, and it is the same cell both times: the
+`VCR (Tape)` row of an explicitly *example* table - "Figure 3: Example seek modes, play
+modes and transport actions, per resource type" in v1 §2.5.5, renumbered `Table B.3`
+and moved to Annex B (p.110) in v3. Theory of Operation, not a definition, and nothing
+validates against it.
+
+That table's cells are stale rather than a rival spelling, which the table itself shows
+two ways. v3's normative list runs to ten values but the table still lists only v1's
+eight - neither `REL_TAPE-INDEX` nor `REL_FRAME` ever reached it. And it was not merely
+left alone: `CHANNEL_FREQ` was added to its `Frequency-based Tuner` row between v1 and
+v3, so the `VCR (Tape)` cell was passed over rather than endorsed.
+
+Not every implementation followed the spec regardless: Windows Embedded CE's UPnP AV
+stack shipped `L"TAPE_INDEX"` as its wire value.
+
+The same shape of trap sits in `CurrentPlayMode`, where the value is `DIRECT_1` - an
+underscore, not the space that reading the prose out loud suggests.
 
 ### Note on the IGD device tree
 
@@ -148,6 +185,9 @@ Two requirements the schema enforces that are easy to miss when reading the pros
 
 ## Deliberately not included
 
+- `UPnP-av-AVTransport-v2-Service.pdf` - the intermediate revision. v3 supersedes it and
+  keeps its additions, so v1 and v3 bracket the range a control point can meet. Add only
+  if a v2 renderer ever turns out to differ from v3 in a way that matters.
 - `didl-lite-v2.xsd` - the ContentDirectory:2 revision of DIDL-Lite. This project
   targets v1 (`metadata-1-0`); keeping both invites validating against the wrong one.
 - `avt-event-v1.xsd`, `rcs-event-v1.xsd`, `cds-event-v1.xsd` - the per-service

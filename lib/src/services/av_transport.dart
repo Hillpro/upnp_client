@@ -319,13 +319,18 @@ class TransportSettings {
   };
 }
 
+/// The play modes of an AVTransport, as `CurrentPlayMode` names them.
+///
+/// AVTransport:1 - the `CurrentPlayMode` `allowedValueList` in the §3 XML
+/// service description is the normative spelling, and what a device validates
+/// `SetPlayMode` against.
 enum PlayMode {
   normal('NORMAL'),
   shuffle('SHUFFLE'),
   repeatOne('REPEAT_ONE'),
   repeatAll('REPEAT_ALL'),
   random('RANDOM'),
-  direct1('DIRECT 1'),
+  direct1('DIRECT_1'),
   intro('INTRO');
 
   const PlayMode(this.value);
@@ -333,6 +338,12 @@ enum PlayMode {
   final String value;
 }
 
+/// The seek units of an AVTransport, as `A_ARG_TYPE_SeekMode` names them.
+///
+/// AVTransport:1 - the `allowedValueList` in the §3 XML service description is
+/// the normative spelling, and what a device validates `Seek` against. Which
+/// units a device actually supports is device-dependent; only `TRACK_NR` is
+/// required, and an unsupported one answers `710 Seek mode not supported`.
 enum SeekMode {
   trackNr('TRACK_NR'),
   absTime('ABS_TIME'),
@@ -340,7 +351,7 @@ enum SeekMode {
   absCount('ABS_COUNT'),
   relCount('REL_COUNT'),
   channelFreq('CHANNEL_FREQ'),
-  tapeIndex('TAPE_INDEX'),
+  tapeIndex('TAPE-INDEX'),
   frame('FRAME');
 
   const SeekMode(this.value);

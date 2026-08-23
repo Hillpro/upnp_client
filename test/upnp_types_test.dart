@@ -152,4 +152,82 @@ void main() {
       expect(names, hasLength(UpnpServiceType.values.length));
     });
   });
+
+  // Every wire value the package can put on the wire, asserted against the
+  // literal the normative allowedValueList publishes. Same reasoning as the
+  // URNs above: deriving the expectation from the enum would make a typo in
+  // the enum invisible, which is exactly how `DIRECT 1` and `TAPE_INDEX`
+  // survived. Each group ends by checking the enum has no value the group
+  // forgot, so adding one without a spec check fails here.
+  group('enum wire values', () {
+    test('PlayMode matches CurrentPlayMode (AVTransport:1)', () {
+      expect(PlayMode.normal.value, 'NORMAL');
+      expect(PlayMode.shuffle.value, 'SHUFFLE');
+      expect(PlayMode.repeatOne.value, 'REPEAT_ONE');
+      expect(PlayMode.repeatAll.value, 'REPEAT_ALL');
+      expect(PlayMode.random.value, 'RANDOM');
+      // Underscore, not a space.
+      expect(PlayMode.direct1.value, 'DIRECT_1');
+      expect(PlayMode.intro.value, 'INTRO');
+      expect(PlayMode.values, hasLength(7));
+    });
+
+    test('SeekMode matches A_ARG_TYPE_SeekMode (AVTransport:1)', () {
+      expect(SeekMode.trackNr.value, 'TRACK_NR');
+      expect(SeekMode.absTime.value, 'ABS_TIME');
+      expect(SeekMode.relTime.value, 'REL_TIME');
+      expect(SeekMode.absCount.value, 'ABS_COUNT');
+      expect(SeekMode.relCount.value, 'REL_COUNT');
+      expect(SeekMode.channelFreq.value, 'CHANNEL_FREQ');
+      // Hyphen, not an underscore - the only one in the list.
+      expect(SeekMode.tapeIndex.value, 'TAPE-INDEX');
+      expect(SeekMode.frame.value, 'FRAME');
+      expect(SeekMode.values, hasLength(8));
+    });
+
+    test('TransportState matches its allowedValueList', () {
+      expect(TransportState.stopped.value, 'STOPPED');
+      expect(TransportState.playing.value, 'PLAYING');
+      expect(TransportState.transitioning.value, 'TRANSITIONING');
+      expect(TransportState.pausedPlayback.value, 'PAUSED_PLAYBACK');
+      expect(TransportState.pausedRecording.value, 'PAUSED_RECORDING');
+      expect(TransportState.recording.value, 'RECORDING');
+      expect(TransportState.noMediaPresent.value, 'NO_MEDIA_PRESENT');
+      expect(TransportState.values, hasLength(7));
+    });
+
+    test('TransportStatus matches its allowedValueList', () {
+      expect(TransportStatus.ok.value, 'OK');
+      expect(TransportStatus.errorOccurred.value, 'ERROR_OCCURRED');
+      expect(TransportStatus.values, hasLength(2));
+    });
+
+    test('PortMappingProtocol matches its allowedValueList', () {
+      // WANIPConnection:1 Table 1.4 - uppercase, so Dart's `name` will not do.
+      expect(PortMappingProtocol.tcp.wireValue, 'TCP');
+      expect(PortMappingProtocol.udp.wireValue, 'UDP');
+      expect(PortMappingProtocol.values, hasLength(2));
+    });
+
+    test('Direction matches the SCPD direction enumeration', () {
+      expect(Direction.in_.value, 'in');
+      expect(Direction.out.value, 'out');
+      expect(Direction.values, hasLength(2));
+    });
+
+    test('DataType separators are dots, never underscores', () {
+      // The Dart identifiers use underscores because a dot is not legal in
+      // one; the wire values must keep the spec's dots.
+      expect(DataType.fixed_14_4.value, 'fixed.14.4');
+      expect(DataType.dateTime_tz.value, 'dateTime.tz');
+      expect(DataType.time_tz.value, 'time.tz');
+      expect(DataType.bin_base64.value, 'bin.base64');
+      expect(DataType.bin_hex.value, 'bin.hex');
+      expect(
+        DataType.values.where((t) => t.value.contains('_')),
+        isEmpty,
+        reason: 'no UPnP data type name contains an underscore',
+      );
+    });
+  });
 }
