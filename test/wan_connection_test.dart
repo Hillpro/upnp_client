@@ -325,6 +325,56 @@ void main() {
         ),
       );
     });
+
+    // Every code AddPortMapping can answer with, asserted against the literal
+    // the spec publishes rather than derived from the constant - a typo in the
+    // constant would otherwise be invisible. 715, 716, 726 and 727 were absent
+    // when this package was audited, which mattered because §2.4.16 warns
+    // about exactly the cases 716 and 727 report.
+    test('surfaces every AddPortMapping code with its spec number', () async {
+      const expected = {
+        715: WanConnectionError.wildCardNotPermittedInSrcIp,
+        716: WanConnectionError.wildCardNotPermittedInExtPort,
+        718: WanConnectionError.conflictInMappingEntry,
+        724: WanConnectionError.samePortValuesRequired,
+        725: WanConnectionError.onlyPermanentLeasesSupported,
+        726: WanConnectionError.remoteHostOnlySupportsWildcard,
+        727: WanConnectionError.externalPortOnlySupportsWildcard,
+        // WANIPConnection:2 adds these three, and version-independent
+        // matching brings a v2 gateway through this same method.
+        728: WanConnectionError.noPortMapsAvailable,
+        729: WanConnectionError.conflictWithOtherMechanisms,
+        732: WanConnectionError.wildCardNotPermittedInIntPort,
+      };
+
+      for (final entry in expected.entries) {
+        expect(entry.value, entry.key, reason: 'constant value');
+        reply(500, soapFault(entry.key));
+        await expectLater(
+          connection().addPortMapping(
+            externalPort: 8080,
+            protocol: PortMappingProtocol.tcp,
+            internalPort: 9090,
+            internalClient: '192.168.1.10',
+          ),
+          throwsA(
+            isA<UPnPException>().having(
+              (e) => e.errorCode,
+              'errorCode',
+              entry.key,
+            ),
+          ),
+          reason: 'code ${entry.key}',
+        );
+      }
+    });
+
+    test('the enumeration codes keep their spec numbers', () {
+      // These two are load-bearing: 713 ends a table walk and 714 means "no
+      // such mapping", and both are turned into null rather than an exception.
+      expect(WanConnectionError.specifiedArrayIndexInvalid, 713);
+      expect(WanConnectionError.noSuchEntryInArray, 714);
+    });
   });
 
   group('deletePortMapping', () {

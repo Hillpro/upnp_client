@@ -67,16 +67,37 @@ abstract class WanConnectionService extends Service {
   /// An empty [remoteHost] is the wildcard, accepting traffic from any source.
   /// A [leaseDuration] of [Duration.zero] requests a permanent mapping.
   ///
-  /// Throws [UPnPException] with [WanConnectionError.conflictInMappingEntry]
-  /// when [externalPort] and [protocol] are already mapped to a *different*
-  /// internal client. That mapping belongs to another host, so this does not
-  /// delete and retry behind the caller's back.
+  /// Throws [UPnPException] whose [UPnPException.errorCode] is
+  /// [WanConnectionError.conflictInMappingEntry] when [externalPort] and
+  /// [protocol] are already mapped to a *different* internal client. That
+  /// mapping belongs to another host, so this does not delete and retry behind
+  /// the caller's back.
   ///
   /// §2.4.16 warns that a gateway need not support a wildcard [externalPort],
-  /// an [internalPort] differing from it, or a non-zero [leaseDuration]. Such
-  /// a gateway answers [WanConnectionError.samePortValuesRequired] or
-  /// [WanConnectionError.onlyPermanentLeasesSupported]; retrying with
-  /// [Duration.zero] is the usual response to the latter.
+  /// an [internalPort] differing from it, or a non-zero [leaseDuration]. Each
+  /// refusal has its own code, and each is recoverable by retrying with what
+  /// the gateway will take:
+  ///
+  /// - [WanConnectionError.wildCardNotPermittedInExtPort] - ask for a specific
+  ///   [externalPort] instead of `0`.
+  /// - [WanConnectionError.samePortValuesRequired] - set [internalPort] equal
+  ///   to [externalPort].
+  /// - [WanConnectionError.onlyPermanentLeasesSupported] - retry with
+  ///   [Duration.zero].
+  /// - [WanConnectionError.wildCardNotPermittedInSrcIp] - [internalClient] was
+  ///   empty; name the LAN address to forward to.
+  ///
+  /// Two gateways insist on the opposite, wanting a wildcard where one was not
+  /// given: [WanConnectionError.remoteHostOnlySupportsWildcard] wants
+  /// [remoteHost] empty, and
+  /// [WanConnectionError.externalPortOnlySupportsWildcard] wants
+  /// [externalPort] `0`.
+  ///
+  /// A v2 gateway reaches this method too, since service types match
+  /// version-independently, so it may also answer
+  /// [WanConnectionError.noPortMapsAvailable],
+  /// [WanConnectionError.conflictWithOtherMechanisms] or
+  /// [WanConnectionError.wildCardNotPermittedInIntPort].
   Future<void> addPortMapping({
     required int externalPort,
     required PortMappingProtocol protocol,
