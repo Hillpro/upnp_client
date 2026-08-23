@@ -136,11 +136,27 @@ class AvTransportService extends Service {
     });
   }
 
+  /// The transport actions that can be invoked on this instance right now,
+  /// which a control point uses to enable or disable its own buttons.
+  ///
+  /// Entries are trimmed - AVTransport:1 §2.2.26 writes its own examples as
+  /// `"Play, Stop"`, a space after each comma - but not otherwise touched, so
+  /// the names arrive as the device spelled them.
+  ///
+  /// Match case-insensitively, and do not assume the standard set: §2.2.26
+  /// names `Play`, `Stop`, `Pause`, `Seek`, `Next`, `Previous` and `Record` in
+  /// that casing, while AVTransport:3 §5.2.28 gives an `allowedValueList`
+  /// spelling them `PLAY`, `STOP` and so on, and lets a device add
+  /// vendor-defined names alongside them.
   Future<List<String>> getCurrentTransportActions({int instanceId = 0}) async {
     final args = await invokeAction('GetCurrentTransportActions', {
       'InstanceID': instanceId,
     });
-    return args['Actions']?.split(',') ?? [];
+    return (args['Actions'] ?? '')
+        .split(',')
+        .map((action) => action.trim())
+        .where((action) => action.isNotEmpty)
+        .toList();
   }
 }
 

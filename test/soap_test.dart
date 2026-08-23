@@ -16,6 +16,7 @@ import 'fixtures.dart';
 
 const _soapNs = 'http://schemas.xmlsoap.org/soap/envelope/';
 const _rcsNs = 'urn:schemas-upnp-org:service:RenderingControl:1';
+const _avtNs = 'urn:schemas-upnp-org:service:AVTransport:1';
 
 /// What the device saw.
 class Captured {
@@ -173,6 +174,70 @@ void main() {
         ),
       );
       expect(await device.renderingControl!.getMute(), isFalse);
+    });
+
+    // AVTransport:1 §2.2.26 writes its own examples as "Play, Stop" - a space
+    // after each comma. CurrentTransportActions is a plain `string`, not a
+    // `CSV (string)`, so the CSV rule that whitespace belongs to the value does
+    // not apply and the spaces are formatting. Splitting without trimming
+    // returned ' Stop', so contains('Stop') was false.
+    group('getCurrentTransportActions', () {
+      Future<List<String>> actionsFrom(String raw) {
+        reply(
+          200,
+          soapResponse(
+            '<u:GetCurrentTransportActionsResponse xmlns:u="$_avtNs">'
+            '<Actions>$raw</Actions>'
+            '</u:GetCurrentTransportActionsResponse>',
+          ),
+        );
+        return device.avTransport!.getCurrentTransportActions();
+      }
+
+      test('trims the spaces the spec puts after each comma', () async {
+        expect(await actionsFrom('Play, Stop'), ['Play', 'Stop']);
+        expect(await actionsFrom('Play, Stop, Pause, Seek, Next, Previous'), [
+          'Play',
+          'Stop',
+          'Pause',
+          'Seek',
+          'Next',
+          'Previous',
+        ]);
+      });
+
+      test('leaves an already-tight list alone', () async {
+        expect(await actionsFrom('Play,Pause,Stop'), ['Play', 'Pause', 'Stop']);
+      });
+
+      test('drops empty entries from a trailing or doubled comma', () async {
+        expect(await actionsFrom('Play,,Stop,'), ['Play', 'Stop']);
+      });
+
+      // Trimming is the only change made, so callers must match
+      // case-insensitively: §2.2.26's prose spells these "Play", while
+      // AVTransport:3 §5.2.28's allowedValueList spells them "PLAY", and both
+      // eras of device are on real networks.
+      test('passes the casing through untouched', () async {
+        expect(await actionsFrom('PLAY, STOP'), ['PLAY', 'STOP']);
+      });
+
+      // §5.2.28 lets a device augment the list with its own action names, so
+      // the result is not necessarily a subset of the standard seven.
+      test('keeps vendor-defined names', () async {
+        expect(await actionsFrom('Play,X_VENDOR_Rewind,Stop'), [
+          'Play',
+          'X_VENDOR_Rewind',
+          'Stop',
+        ]);
+      });
+
+      test(
+        'returns an empty list when the device reports no actions',
+        () async {
+          expect(await actionsFrom(''), isEmpty);
+        },
+      );
     });
 
     test('turns a SOAP fault into a typed UPnPException', () async {
