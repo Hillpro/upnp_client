@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.3.1
+
+- **INFO**: Silenced the `namespace`/`namespaces` deprecation warnings introduced by xml 7.0.1. No behaviour change: the replacements require Dart 3.11, above this package's 3.8 SDK floor.
+
 ## 1.3.0
 
 - **FEAT**: IGD NAT port mapping through `WanConnectionService`, subclassed as `WanIpConnectionService` (`WANIPConnection`) and `WanPppConnectionService` (`WANPPPConnection`) because both declare the same actions: `addPortMapping()`, `deletePortMapping()`, `getSpecificPortMappingEntry()`, `getGenericPortMappingEntry()` and `listPortMappings()`

@@ -1,6 +1,6 @@
 name: upnp_client
 description: Universal Plug and Play (UPnP) Client Implementation. Supports IGD control as well as DLNA media casting.
-version: 1.3.0
+version: 1.3.1
 
 homepage: https://github.com/Hillpro/upnp_client
 repository: https://github.com/Hillpro/upnp_client
@@ -10,8 +10,8 @@ environment:
 
 dependencies:
   # xml 7.0.1 deprecates the `namespace`/`namespaces` arguments, but their
-  # replacements need Dart 3.11, above the SDK floor above. Migrate and drop
-  # those when we require 3.11.
+  # replacements need Dart 3.11, above the SDK floor set above. Call sites keep
+  # the deprecated form behind `// ignore: deprecated_member_use` until then.
   xml: '>=6.6.1 <8.0.0'
   collection: ^1.19.1
 
