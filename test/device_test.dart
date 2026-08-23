@@ -77,6 +77,28 @@ void main() {
       expect(d.udn, 'uuid:11111111-2222-3333-4444-555555555555');
     });
 
+    // UDA 1.1 §3.2.1 - element names are case sensitive, and these two carry
+    // an uppercase URL in every UDA version. Reading them as `manufacturerUrl`
+    // and `modelUrl` left both permanently null against real devices, which
+    // went unnoticed because the fixture had the same misspelling and no test
+    // asserted the fields.
+    test('parses the URL metadata, which the spec spells with URL', () {
+      final d = parseDevice().description!;
+      expect(d.manufacturerUrl, 'http://acme.example');
+      expect(d.modelUrl, 'http://acme.example/s1');
+    });
+
+    test('ignores lowercase-url spellings no UPnP version defines', () {
+      final xml = XmlDocument.parse('''
+<device>
+  <manufacturerUrl>http://wrong.example</manufacturerUrl>
+  <modelUrl>http://wrong.example/m</modelUrl>
+</device>''').rootElement;
+      final d = DeviceDescription.fromXml(xml);
+      expect(d.manufacturerUrl, isNull);
+      expect(d.modelUrl, isNull);
+    });
+
     test('strips the uuid: prefix from the UDN', () {
       expect(
         parseDevice().description!.uuid,

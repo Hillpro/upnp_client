@@ -9,11 +9,11 @@ const deviceDescriptionXml = '''
     <deviceType>urn:schemas-upnp-org:device:MediaRenderer:1</deviceType>
     <friendlyName>Living Room</friendlyName>
     <manufacturer>Acme</manufacturer>
-    <manufacturerUrl>http://acme.example</manufacturerUrl>
+    <manufacturerURL>http://acme.example</manufacturerURL>
     <modelName>Speaker</modelName>
     <modelNumber>S-1</modelNumber>
     <modelDescription>A speaker</modelDescription>
-    <modelUrl>http://acme.example/s1</modelUrl>
+    <modelURL>http://acme.example/s1</modelURL>
     <serialNumber>SN123</serialNumber>
     <UDN>uuid:11111111-2222-3333-4444-555555555555</UDN>
     <UPC>012345678905</UPC>

@@ -212,6 +212,8 @@ class DeviceDescription {
   String? manufacturer;
 
   /// The URL to the manufacturer site
+  ///
+  /// Parsed from `<manufacturerURL>`.
   String? manufacturerUrl;
 
   /// The name of this model
@@ -227,6 +229,8 @@ class DeviceDescription {
   String? modelType;
 
   /// The URL to the model site
+  ///
+  /// Parsed from `<modelURL>`.
   String? modelUrl;
 
   /// The serial number of this device
@@ -249,12 +253,12 @@ class DeviceDescription {
     deviceType = _xml.getElement('deviceType')?.innerText;
     friendlyName = _xml.getElement('friendlyName')?.innerText;
     manufacturer = _xml.getElement('manufacturer')?.innerText;
-    manufacturerUrl = _xml.getElement('manufacturerUrl')?.innerText;
+    manufacturerUrl = _xml.getElement('manufacturerURL')?.innerText;
     modelName = _xml.getElement('modelName')?.innerText;
     modelNumber = _xml.getElement('modelNumber')?.innerText;
     modelDescription = _xml.getElement('modelDescription')?.innerText;
     modelType = _xml.getElement('modelType')?.innerText;
-    modelUrl = _xml.getElement('modelUrl')?.innerText;
+    modelUrl = _xml.getElement('modelURL')?.innerText;
     serialNumber = _xml.getElement('serialNumber')?.innerText;
     udn = _xml.getElement('UDN')?.innerText;
     upc = _xml.getElement('UPC')?.innerText;
