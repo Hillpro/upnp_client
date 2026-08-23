@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:upnp_client/src/device.dart';
+import 'package:upnp_client/src/utils/user_agent.dart';
 import 'package:xml/xml.dart';
 
 const _descriptionTimeout = Duration(seconds: 30);
@@ -193,9 +194,7 @@ class DeviceDiscoverer {
           ..writeln('MAN: "ssdp:discover"')
           ..writeln('MX: 3')
           ..writeln('ST: $searchTarget')
-          ..writeln(
-            'USER-AGENT: ${Platform.operatingSystem}/${Platform.operatingSystemVersion} UPnP/1.1 Dart/${Platform.version}\n',
-          );
+          ..writeln('USER-AGENT: $userAgent\n');
 
         final data = utf8.encode(buff.toString().replaceAll('\n', '\r\n'));
 
