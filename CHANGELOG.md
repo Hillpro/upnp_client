@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.4.1
+
+- **FIX**: The SSDP `USER-AGENT` sends three sanitised product tokens (UDA 1.1 §1.3.2); spaces and quotes in the OS version string ended the field early
+- **INFO**: Silenced the four `constant_identifier_names` infos on the spec-named `DataType` constants
+- **INFO**: Declared `topics` and `issue_tracker` in `pubspec.yaml`
+
+
 ## 1.4.0
 
 - **FIX**: `manufacturerUrl` and `modelUrl` were permanently null; the elements are `<manufacturerURL>` and `<modelURL>` (UDA 1.1 §3.2.1)

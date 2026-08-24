@@ -2,7 +2,7 @@ import 'dart:io';
 
 /// The version of this package. Kept in sync with `pubspec.yaml` by
 /// `test/user_agent_test.dart`.
-const packageVersion = '1.4.0';
+const packageVersion = '1.4.1';
 
 /// Characters an HTTP/1.1 product token may not hold. RFC 2616 §2.2 bars the
 /// separators and CTLs; this keeps a conservative subset of what is left.
