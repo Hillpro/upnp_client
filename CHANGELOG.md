@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.5.0
+
+- **FIX**: A `dispose()` landing mid-fetch threw `Bad state: Cannot add new events after calling close`; the event is dropped instead
+- **FEAT**: `DeviceDiscoverer.errors` is `Stream<Never>`, not `Stream<void>`; it carries errors only. Callers are unaffected, a subclass overriding it is not
+- **INFO**: The discovery tests re-send the SSDP datagram until the discoverer answers, so a dropped one no longer fails CI
+
+
 ## 1.4.1
 
 - **FIX**: The SSDP `USER-AGENT` sends three sanitised product tokens (UDA 1.1 §1.3.2). The third token is now `upnp_client/<version>`, not `Dart/<version>`
