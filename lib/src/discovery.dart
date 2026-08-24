@@ -15,7 +15,7 @@ const _descriptionTimeout = Duration(seconds: 30);
 class DeviceDiscoverer {
   final _sockets = <RawDatagramSocket>[];
   final _devices = StreamController<Device>.broadcast();
-  final _errors = StreamController<void>.broadcast();
+  final _errors = StreamController<Never>.broadcast();
   static const _supportedAddressTypes = [
     InternetAddressType.IPv4,
     InternetAddressType.IPv6,
@@ -26,7 +26,10 @@ class DeviceDiscoverer {
 
   /// A stream of errors occurred during the discovery process.
   /// These errors are not fatal and will not stop the discovery process.
-  Stream<void> get errors => _errors.stream;
+  ///
+  /// Typed `Never`: the stream carries error events only, so there is no data
+  /// event for it to hold.
+  Stream<Never> get errors => _errors.stream;
 
   /// Starts the Discoverer.
   ///
@@ -70,6 +73,23 @@ class DeviceDiscoverer {
     _errors.close();
   }
 
+  /// Emits [device] unless [dispose] has already closed the stream.
+  ///
+  /// The description fetch is not awaited, so it outlives a [dispose] that
+  /// lands while it is in flight. Adding then throws a `StateError` from a
+  /// future nobody holds, which reaches the zone as an unhandled error and
+  /// takes the isolate down. A disposed discoverer drops the event instead.
+  void _emitDevice(Device device) {
+    if (!_devices.isClosed) _devices.add(device);
+  }
+
+  /// Reports [error] unless [dispose] has already closed the stream.
+  ///
+  /// See [_emitDevice] for why the check is needed.
+  void _emitError(Object error, StackTrace stack) {
+    if (!_errors.isClosed) _errors.addError(error, stack);
+  }
+
   Future<void> _createSocket(
     InternetAddress address, [
     int port = 0,
@@ -90,7 +110,7 @@ class DeviceDiscoverer {
         try {
           headers = utf8.decode(packet.data).split('\r\n');
         } on FormatException catch (e, st) {
-          _errors.addError(e, st);
+          _emitError(e, st);
           return;
         }
 
@@ -101,7 +121,7 @@ class DeviceDiscoverer {
 
         _addDevice(headers);
       }
-    }, onError: _errors.addError);
+    }, onError: _emitError);
   }
 
   Future<void> _addDevice(List<String> headers) async {
@@ -122,7 +142,7 @@ class DeviceDiscoverer {
     } on FormatException catch (e, st) {
       // A device advertising an unparseable LOCATION is worth reporting, so
       // this stays on the errors stream rather than being dropped quietly.
-      _errors.addError(e, st);
+      _emitError(e, st);
       return;
     }
 
@@ -145,7 +165,7 @@ class DeviceDiscoverer {
         location,
       ).timeout(_descriptionTimeout);
     } on Exception catch (e, st) {
-      _errors.addError(e, st);
+      _emitError(e, st);
     } finally {
       // force, or the connection the timeout abandoned stays open: a plain
       // close leaves active connections alone.
@@ -176,7 +196,7 @@ class DeviceDiscoverer {
     final deviceXml = rootElement.getElement('device');
 
     if (deviceXml != null) {
-      _devices.add(Device.fromXmlTyped(deviceXml, location, urlBase));
+      _emitDevice(Device.fromXmlTyped(deviceXml, location, urlBase));
     }
   }
 
@@ -202,7 +222,7 @@ class DeviceDiscoverer {
         for (var i = 0; i < 3; i++) {
           runZonedGuarded(
             () => socket.send(data, target.address, 1900),
-            _errors.addError,
+            _emitError,
           );
           if (i < 2) {
             await Future.delayed(Duration(milliseconds: random.nextInt(100)));

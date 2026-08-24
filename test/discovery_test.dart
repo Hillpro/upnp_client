@@ -19,6 +19,8 @@ Future<int> freeUdpPort() async {
 void main() {
   late HttpServer server;
   late int descriptionStatus;
+  late Duration descriptionDelay;
+  late Completer<void> fetchStarted;
   late String descriptionBody;
   late DeviceDiscoverer discoverer;
   late int ssdpPort;
@@ -26,12 +28,23 @@ void main() {
   setUp(() async {
     descriptionStatus = 200;
     descriptionBody = deviceDescriptionXml;
+    descriptionDelay = Duration.zero;
+    fetchStarted = Completer<void>();
     server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    server.listen((request) {
-      request.response.statusCode = descriptionStatus;
-      request.response.headers.contentType = ContentType.parse('text/xml');
-      request.response.write(descriptionBody);
-      request.response.close();
+    server.listen((request) async {
+      if (!fetchStarted.isCompleted) fetchStarted.complete();
+      if (descriptionDelay > Duration.zero) {
+        await Future<void>.delayed(descriptionDelay);
+      }
+      try {
+        request.response.statusCode = descriptionStatus;
+        request.response.headers.contentType = ContentType.parse('text/xml');
+        request.response.write(descriptionBody);
+        await request.response.close();
+      } catch (_) {
+        // A delayed reply can outlive the force-close in tearDown, and the
+        // write then throws into a handler nobody awaits.
+      }
     });
 
     ssdpPort = await freeUdpPort();
@@ -74,6 +87,49 @@ void main() {
     }
   }
 
+  /// Sends [payload] until [outcome] settles, then returns what it settled to.
+  ///
+  /// A datagram the stack accepts can still be dropped while the event loop is
+  /// busy - see [expectIgnored] below - and the loss is invisible: the
+  /// discoverer never sees the response, so the future being awaited can no
+  /// longer complete and the test hangs until its timeout. Re-sending on an
+  /// interval turns that into a delay. Repeats are harmless here because every
+  /// caller reads the first element of a stream.
+  ///
+  /// [outcome] is evaluated before the first send, so a `.first` subscription
+  /// passed in is already listening when the payload goes out.
+  Future<T> sendUntil<T>(String payload, Future<T> outcome) async {
+    late T value;
+    Object? error;
+    StackTrace? stack;
+    var settled = false;
+
+    unawaited(
+      outcome.then(
+        (result) {
+          value = result;
+          settled = true;
+        },
+        onError: (Object e, StackTrace st) {
+          error = e;
+          stack = st;
+          settled = true;
+        },
+      ),
+    );
+
+    for (var attempt = 0; !settled && attempt < 40; attempt++) {
+      await sendSsdp(payload);
+      for (var tick = 0; !settled && tick < 5; tick++) {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      }
+    }
+
+    if (!settled) fail('no response to the SSDP payload within 10s');
+    if (error != null) Error.throwWithStackTrace(error!, stack!);
+    return value;
+  }
+
   String searchResponse({String? status, String? locationHeader}) =>
       '${status ?? 'HTTP/1.1 200 OK'}\n'
       'CACHE-CONTROL: max-age=1800\n'
@@ -83,10 +139,7 @@ void main() {
       '\n';
 
   test('emits a device for a well-formed M-SEARCH response', () async {
-    final discovered = discoverer.devices.first;
-    await sendSsdp(searchResponse());
-
-    final device = await discovered.timeout(const Duration(seconds: 10));
+    final device = await sendUntil(searchResponse(), discoverer.devices.first);
     expect(device.description!.friendlyName, 'Living Room');
     expect(device.url, location());
     expect(
@@ -108,11 +161,8 @@ void main() {
     descriptionStatus = 404;
     descriptionBody = '<!DOCTYPE html><html><body>Not Found</body></html>';
 
-    final failure = discoverer.errors.first;
-    await sendSsdp(searchResponse());
-
     await expectLater(
-      failure.timeout(const Duration(seconds: 10)),
+      sendUntil(searchResponse(), discoverer.errors.first),
       throwsA(
         isA<Exception>().having(
           (e) => e.toString(),
@@ -180,6 +230,20 @@ void main() {
           .getDevices(timeout: const Duration(milliseconds: 200))
           .timeout(const Duration(seconds: 10));
       expect(devices, isA<List<Device>>());
+    });
+
+    test('a dispose mid-fetch is not fatal', () async {
+      // Regression: the description fetch is not awaited, so it outlived
+      // dispose() and added to a closed controller. The StateError surfaced
+      // as an unhandled async error, failing whichever test was running.
+      descriptionDelay = const Duration(milliseconds: 300);
+      await sendUntil(searchResponse(), fetchStarted.future);
+
+      discoverer.dispose();
+      // Long enough for the reply to land back inside this test, so the zone
+      // catches anything it throws.
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+      await expectLater(discoverer.devices, emitsDone);
     });
 
     test('stop can be called more than once', () {
